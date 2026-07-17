@@ -5,20 +5,17 @@
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (polymode "0.2") (jinja2-mode "20220117.807") (go-template-ts-mode "0.1.0"))
-;; Keywords: languages, polymode, templates, jinja2, go
+;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
 
 ;;; Commentary:
 
-;; Shared support for `poly-any-jinja2.el' and `poly-any-go-template.el'.
-;; Install this package and require `poly-any-template' to enable both
-;; filename-aware polymodes.
+;; Shared support for the independently installable
+;; `poly-any-jinja2.el' and `poly-any-go-template.el' packages.
 
 ;;; Code:
 
 (require 'polymode)
-(require 'go-template-ts-mode)
 (require 'subr-x)
 
 (defun poly-any-template--get-major-mode-for-file (filename)
@@ -53,19 +50,6 @@
                :innermodes '(,innermode)
                :lighter ,lighter) t))
     (funcall polymode-symbol)))
-
-;;;###autoload
-(autoload 'poly-any-jinja2-mode "poly-any-jinja2" nil t)
-;;;###autoload
-(autoload 'poly-any-go-template-mode "poly-any-go-template" nil t)
-
-;;;###autoload
-(add-to-list 'auto-mode-alist
-             '("\\.\\(?:j2\\|jinja2\\)\\'" . poly-any-jinja2-mode))
-
-;;;###autoload
-(add-to-list 'auto-mode-alist
-             '("\\.[^./]+\\.gotmpl\\'" . poly-any-go-template-mode))
 
 (provide 'poly-any-template)
 ;;; poly-any-template.el ends here

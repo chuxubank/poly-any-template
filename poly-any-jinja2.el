@@ -1,6 +1,10 @@
 ;;; poly-any-jinja2.el --- Polymode for Jinja2 templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "29.1") (polymode "0.2") (jinja2-mode "20220117.807"))
+;; Keywords: languages, polymode, templates, jinja2
+;; URL: https://github.com/chuxubank/poly-any-template
 
 ;;; Commentary:
 
@@ -25,6 +29,10 @@
   (interactive)
   (poly-any-template--activate
    "jinja2" 'poly-any-template-jinja2-innermode " J2"))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist
+             '("\\.\\(?:j2\\|jinja2\\)\\'" . poly-any-jinja2-mode))
 
 (provide 'poly-any-jinja2)
 ;;; poly-any-jinja2.el ends here

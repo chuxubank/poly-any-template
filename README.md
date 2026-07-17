@@ -1,9 +1,9 @@
 # poly-any-template
 
-`poly-any-template` provides host-aware polymodes for Jinja2 and Go template
-files. The implementation is split into `poly-any-jinja2.el` and
-`poly-any-go-template.el`; the mode before the template suffix is inferred
-from the filename:
+This repository contains two independently installable packages,
+`poly-any-jinja2` and `poly-any-go-template`. They share the small helper in
+`poly-any-template.el`; the mode before the template suffix is inferred from
+the filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -20,12 +20,21 @@ Plain `.gotmpl` files continue to use `go-template-ts-mode` directly.
 (use-package go-template-ts-mode
   :vc (:url "https://github.com/chuxubank/go-template-ts-mode"))
 
-(use-package poly-any-template
-  :vc (:url "https://github.com/chuxubank/poly-any-template")
+(use-package poly-any-jinja2
+  :vc (poly-any-jinja2
+       :url "https://github.com/chuxubank/poly-any-template"
+       :main-file "poly-any-jinja2.el")
+  :demand t)
+
+(use-package poly-any-go-template
+  :vc (poly-any-go-template
+       :url "https://github.com/chuxubank/poly-any-template"
+       :main-file "poly-any-go-template.el")
   :demand t)
 ```
 
-The package requires Emacs 29.1+, `polymode`, `jinja2-mode`, and
+`poly-any-jinja2` requires Emacs 29.1+, `polymode`, and `jinja2-mode`.
+`poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode`.
 
 ## License
