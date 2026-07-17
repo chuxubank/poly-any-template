@@ -11,8 +11,11 @@ the filename:
 | `values.yaml.jinja2` | YAML | Jinja2 |
 | `deployment.yaml.gotmpl` | YAML | `go-template-ts-mode` |
 | `page.html.gotmpl` | HTML | `go-template-ts-mode` |
+| `deployment.yaml.tmpl` | YAML | `go-template-ts-mode` |
+| `page.html.tmpl` | HTML | `go-template-ts-mode` |
 
-Plain `.gotmpl` files continue to use `go-template-ts-mode` directly.
+Plain `.gotmpl` and `.tmpl` files continue to use `go-template-ts-mode`
+directly.
 
 ## Installation
 

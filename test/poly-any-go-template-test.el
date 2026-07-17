@@ -11,18 +11,26 @@
               'go-template-ts-mode)))
 
 (ert-deftest poly-any-go-template-registers-file-patterns-in-order ()
-  (let ((poly-entry (cl-position '("\\.[^./]+\\.gotmpl\\'"
+  (let ((poly-entry (cl-position '("\\.[^./]+\\.\\(?:gotmpl\\|tmpl\\)\\'"
                                   . poly-any-go-template-mode)
                                  auto-mode-alist :test #'equal))
-        (plain-entry (cl-position '("\\.gotmpl\\'" . go-template-ts-mode)
+        (plain-entry (cl-position '("\\.\\(?:gotmpl\\|tmpl\\)\\'"
+                                   . go-template-ts-mode)
                                   auto-mode-alist :test #'equal)))
     (should poly-entry)
     (should plain-entry)
     (should (< poly-entry plain-entry))))
 
+(ert-deftest poly-any-go-template-matches-tmpl-compound-files ()
+  (let ((pattern (caar (cl-member '("\\.[^./]+\\.\\(?:gotmpl\\|tmpl\\)\\'"
+                                    . poly-any-go-template-mode)
+                                  auto-mode-alist :test #'equal))))
+    (should (string-match-p pattern "deployment.yaml.gotmpl"))
+    (should (string-match-p pattern "deployment.yaml.tmpl"))))
+
 (ert-deftest poly-any-go-template-span-includes-delimiters ()
   (with-temp-buffer
-    (setq buffer-file-name "/tmp/deployment.text.gotmpl")
+    (setq buffer-file-name "/tmp/deployment.text.tmpl")
     (insert "name={{ printf \"%s\" .Name }}")
     (poly-any-go-template-mode)
     (goto-char (point-min))
@@ -37,7 +45,7 @@
   (skip-unless (and (fboundp 'yaml-ts-mode) (treesit-ready-p 'yaml)
                     (treesit-ready-p 'gotmpl)))
   (with-temp-buffer
-    (setq buffer-file-name "/tmp/deployment.yaml.gotmpl")
+    (setq buffer-file-name "/tmp/deployment.yaml.tmpl")
     (insert "name: {{ printf \"%s\" .Release.Name }}\n")
     (poly-any-go-template-mode)
     (let ((poly-lock-allow-background-adjustment nil))

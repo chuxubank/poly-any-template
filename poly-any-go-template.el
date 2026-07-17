@@ -44,7 +44,8 @@ Return a zero-width match so the inner span includes the opening delimiter."
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist
-             '("\\.[^./]+\\.gotmpl\\'" . poly-any-go-template-mode))
+             '("\\.[^./]+\\.\\(?:gotmpl\\|tmpl\\)\\'"
+               . poly-any-go-template-mode))
 
 (provide 'poly-any-go-template)
 ;;; poly-any-go-template.el ends here
