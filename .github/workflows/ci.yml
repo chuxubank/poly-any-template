@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@master
+        with:
+          version: 30.2
+      - name: Install dependencies
+        run: |
+          emacs -Q --batch \
+            --eval "(require 'package)" \
+            --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
+            --eval "(package-refresh-contents)" \
+            --eval "(package-install 'polymode)" \
+            --eval "(package-install 'poly-ansible)" \
+            --eval "(package-vc-install \"https://github.com/chuxubank/go-template-ts-mode\")"
+      - name: Byte compile
+        run: emacs -Q --batch -L . --eval "(setq byte-compile-error-on-warn t)" -f batch-byte-compile poly-any-template.el poly-any-jinja2.el poly-any-go-template.el
+      - name: Run tests
+        run: emacs -Q --batch -L . -L test -l yaml-ts-mode -l poly-any-template-test -f ert-run-tests-batch-and-exit
