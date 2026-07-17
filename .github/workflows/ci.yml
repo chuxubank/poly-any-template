@@ -22,6 +22,6 @@ jobs:
             --eval "(package-install 'poly-ansible)" \
             --eval "(package-vc-install \"https://github.com/chuxubank/go-template-ts-mode\")"
       - name: Byte compile
-        run: emacs -Q --batch -L . --eval "(setq byte-compile-error-on-warn t)" -f batch-byte-compile poly-any-template.el poly-any-jinja2.el poly-any-go-template.el
+        run: emacs -Q --batch -L . --eval "(require 'package)" --eval "(package-initialize)" --eval "(setq byte-compile-error-on-warn t)" -f batch-byte-compile poly-any-template.el poly-any-jinja2.el poly-any-go-template.el
       - name: Run tests
-        run: emacs -Q --batch -L . -L test -l yaml-ts-mode -l poly-any-template-test -f ert-run-tests-batch-and-exit
+        run: emacs -Q --batch -L . -L test --eval "(require 'package)" --eval "(package-initialize)" -l yaml-ts-mode -l poly-any-jinja2-test -l poly-any-go-template-test -f ert-run-tests-batch-and-exit
