@@ -5,7 +5,7 @@
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (polymode "0.2") (poly-ansible "0.5.2") (go-template-ts-mode "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (polymode "0.2") (jinja2-mode "20220117.807") (go-template-ts-mode "0.1.0"))
 ;; Keywords: languages, polymode, templates, jinja2, go
 ;; URL: https://github.com/chuxubank/poly-any-template
 

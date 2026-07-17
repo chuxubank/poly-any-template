@@ -22,7 +22,7 @@ install-deps:
 	$(BATCH) $(ARCHIVES) \
 		--eval "(package-refresh-contents)" \
 		--eval "(package-install 'polymode)" \
-		--eval "(package-install 'poly-ansible)" \
+		--eval "(package-install 'jinja2-mode)" \
 		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))"
 
 compile:

@@ -25,7 +25,7 @@ Plain `.gotmpl` files continue to use `go-template-ts-mode` directly.
   :demand t)
 ```
 
-The package requires Emacs 29.1+, `polymode`, `poly-ansible`, and
+The package requires Emacs 29.1+, `polymode`, `jinja2-mode`, and
 `go-template-ts-mode`.
 
 ## License

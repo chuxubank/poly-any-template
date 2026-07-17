@@ -9,13 +9,22 @@
 ;;; Code:
 
 (require 'poly-any-template)
-(require 'poly-jinja2)
+(require 'jinja2-mode)
+
+(define-innermode poly-any-template-jinja2-innermode
+  :mode #'jinja2-mode
+  :head-matcher "{[%{#][+-]?"
+  :tail-matcher "[+-]?[%}#]}"
+  :head-mode 'body
+  :tail-mode 'body
+  :head-adjust-face nil)
 
 ;;;###autoload
 (defun poly-any-jinja2-mode ()
   "Edit Jinja2 templates using the mode inferred from the host filename."
   (interactive)
-  (poly-any-template--activate "jinja2" 'poly-jinja2-innermode " J2"))
+  (poly-any-template--activate
+   "jinja2" 'poly-any-template-jinja2-innermode " J2"))
 
 (provide 'poly-any-jinja2)
 ;;; poly-any-jinja2.el ends here
