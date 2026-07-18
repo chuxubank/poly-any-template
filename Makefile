@@ -7,7 +7,9 @@ SOURCES = poly-any-template.el poly-any-jinja2.el poly-any-go-template.el
 
 PACKAGE_SETUP = \
 	--eval "(require 'package)" \
-	--eval "(package-initialize)"
+	--eval "(package-initialize)" \
+	--eval "(setq load-path (cons \"$(CURDIR)\" (delete \"$(CURDIR)\" load-path)))" \
+	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))"
 
 ARCHIVES = \
 	--eval "(require 'package)" \

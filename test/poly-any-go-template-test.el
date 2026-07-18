@@ -28,6 +28,27 @@
     (should (string-match-p pattern "deployment.yaml.gotmpl"))
     (should (string-match-p pattern "deployment.yaml.tmpl"))))
 
+(ert-deftest poly-any-go-template-applies-host-filename-functions ()
+  (let ((poly-any-template-host-filename-functions
+         (list (lambda (filename)
+                 (replace-regexp-in-string
+                  "/dot_\\([^/]+\\)\\'" "/.\\1" filename)))))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/dot_zprofile.tmpl")
+      (poly-any-go-template-mode)
+      (should (eq major-mode 'sh-mode))
+      (should polymode-mode))))
+
+(ert-deftest poly-any-go-template-runs-after-activate-hook ()
+  (let ((poly-any-template-after-activate-hook nil)
+        activated)
+    (add-hook 'poly-any-template-after-activate-hook
+              (lambda () (setq activated t)))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/deployment.yaml.tmpl")
+      (poly-any-go-template-mode))
+    (should activated)))
+
 (ert-deftest poly-any-go-template-span-includes-delimiters ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/deployment.text.tmpl")
