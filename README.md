@@ -17,11 +17,6 @@ the filename:
 Plain `.gotmpl` and `.tmpl` files continue to use `go-template-ts-mode`
 directly.
 
-`poly-any-ansible-mode` applies the same Jinja2 inner mode to Ansible YAML
-under `ansible/`, `group_vars/`, and `host_vars/`, then enables
-`ansible-mode` and `ansible-doc-mode` when available. It replaces the mode
-glue from `poly-ansible` without depending on that package.
-
 ## Installation
 
 ```elisp

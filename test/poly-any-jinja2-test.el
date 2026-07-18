@@ -27,26 +27,5 @@
                    . poly-any-jinja2-mode)
                   auto-mode-alist)))
 
-(ert-deftest poly-any-jinja2-registers-ansible-file-patterns ()
-  (dolist (entry '(("/ansible/.*\\.ya?ml\\'" . poly-any-ansible-mode)
-                   ("/\\(?:group\\|host\\)_vars/" . poly-any-ansible-mode)))
-    (should (member entry auto-mode-alist))))
-
-(ert-deftest poly-any-ansible-configures-yaml-host-and-minor-modes ()
-  (let ((auto-mode-alist '(("\\.ya?ml\\'" . yaml-mode)))
-        ansible-mode-enabled
-        ansible-doc-mode-enabled)
-    (cl-letf (((symbol-function 'ansible-mode)
-               (lambda (arg) (setq ansible-mode-enabled arg)))
-              ((symbol-function 'ansible-doc-mode)
-               (lambda (arg) (setq ansible-doc-mode-enabled arg))))
-      (with-temp-buffer
-        (setq buffer-file-name "/tmp/ansible/playbook.yaml")
-        (poly-any-ansible-mode)
-        (should (eq major-mode 'yaml-mode))
-        (should polymode-mode)
-        (should (eq ansible-mode-enabled 1))
-        (should (eq ansible-doc-mode-enabled 1))))))
-
 (provide 'poly-any-jinja2-test)
 ;;; poly-any-jinja2-test.el ends here
