@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -64,7 +64,10 @@ value is the template filename without its final extension."
                            "-mode" (symbol-name host-major-mode))
                           dialect))))
     (unless (fboundp host-mode-symbol)
-      (eval `(define-hostmode ,host-mode-symbol :mode ',host-major-mode) t))
+      (eval `(define-hostmode ,host-mode-symbol
+               :mode ',host-major-mode
+               :protect-font-lock t)
+            t))
     (unless (fboundp polymode-symbol)
       (eval `(define-polymode ,polymode-symbol
                :hostmode ',host-mode-symbol

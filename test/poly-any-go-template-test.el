@@ -5,6 +5,7 @@
 (require 'ert)
 (require 'poly-any-template)
 (require 'poly-any-go-template)
+(require 'toml-ts-mode nil t)
 
 (ert-deftest poly-any-go-template-configures-inner-mode ()
   (should (eq (eieio-oref poly-any-template-go-innermode 'mode)
@@ -65,24 +66,61 @@
 (ert-deftest poly-any-go-template-fontifies-host-and-inner-mode ()
   (skip-unless (and (fboundp 'yaml-ts-mode) (treesit-ready-p 'yaml)
                     (treesit-ready-p 'gotmpl)))
-  (with-temp-buffer
-    (setq buffer-file-name "/tmp/deployment.yaml.tmpl")
-    (insert "name: {{ printf \"%s\" .Release.Name }}\n")
-    (poly-any-go-template-mode)
-    (let ((poly-lock-allow-background-adjustment nil))
-      (pm-map-over-spans
-       (lambda (_span)
-         (setq font-lock-mode t)
-         (setq-local poly-lock-allow-fontification t)
-         (poly-lock-mode t)))
-      (font-lock-ensure))
-    (goto-char (point-min))
-    (search-forward "name")
-    (should (eq (get-text-property (1- (point)) 'face)
-                'font-lock-property-use-face))
-    (search-forward "printf")
-    (should (eq (get-text-property (1- (point)) 'face)
-                'font-lock-builtin-face))))
+  (let ((treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/deployment.yaml.tmpl")
+      (insert "name: {{ printf \"%s\" .Release.Name }}\n")
+      (poly-any-go-template-mode)
+      (let ((poly-lock-allow-background-adjustment nil))
+        (pm-map-over-spans
+         (lambda (_span)
+           (setq font-lock-mode t)
+           (setq-local poly-lock-allow-fontification t)
+           (poly-lock-mode t)))
+        (font-lock-ensure))
+      (goto-char (point-min))
+      (search-forward "name")
+      (should (eq (get-text-property (1- (point)) 'face)
+                  'font-lock-property-use-face))
+      (search-forward "printf")
+      (should (memq (get-text-property (1- (point)) 'face)
+                    '(font-lock-builtin-face
+                      font-lock-function-call-face)))
+      (should-not
+       (text-property-search-forward 'face 'font-lock-warning-face t)))))
+
+(ert-deftest poly-any-go-template-protects-host-font-lock-from-inner-spans ()
+  (skip-unless (and (fboundp 'toml-ts-mode) (treesit-ready-p 'toml)
+                    (treesit-ready-p 'gotmpl)))
+  (let ((auto-mode-alist '(("\\.toml\\'" . toml-ts-mode)))
+        (treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/common.toml.tmpl")
+      (insert "[{{ index .path.cache \"models-dev-api\" | quote }}]\n"
+              "type = \"file\"\n"
+              "{{ if eq .chezmoi.os \"linux\" }}\n"
+              "url = \"https://example.com/{{ .chezmoi.arch }}\"\n"
+              "{{ end }}\n")
+      (poly-any-go-template-mode)
+      (let ((poly-lock-allow-background-adjustment nil))
+        (pm-map-over-spans
+         (lambda (_span)
+           (setq font-lock-mode t)
+           (setq-local poly-lock-allow-fontification t)
+           (poly-lock-mode t)))
+        (font-lock-ensure))
+      (let (inner-warning)
+        (pm-map-over-spans
+         (lambda (span)
+           (when (eq (car span) 'body)
+             (setq inner-warning
+                   (or inner-warning
+                       (cl-loop for position from (nth 1 span)
+                                below (nth 2 span)
+                                thereis
+                                (eq (get-char-property position 'face)
+                                    'font-lock-warning-face)))))))
+        (should-not inner-warning)))))
 
 (provide 'poly-any-go-template-test)
 ;;; poly-any-go-template-test.el ends here
