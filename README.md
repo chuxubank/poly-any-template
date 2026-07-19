@@ -1,9 +1,9 @@
 # poly-any-template
 
-This repository contains two independently installable packages,
-`poly-any-jinja2` and `poly-any-go-template`. They share the small helper in
-`poly-any-template.el`; the mode before the template suffix is inferred from
-the filename:
+This repository contains three independently installable packages:
+`poly-any-jinja2`, `poly-any-go-template`, and `poly-treesit-fold`. The two
+template modes share the small helper in `poly-any-template.el`; the mode
+before the template suffix is inferred from the filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -34,11 +34,23 @@ directly.
        :url "https://github.com/chuxubank/poly-any-template"
        :main-file "poly-any-go-template.el")
   :demand t)
+
+(use-package poly-treesit-fold
+  :vc (poly-treesit-fold
+       :url "https://github.com/chuxubank/poly-any-template"
+       :main-file "poly-treesit-fold.el")
+  :demand t
+  :config
+  (poly-treesit-fold-mode 1))
 ```
 
 `poly-any-jinja2` requires Emacs 29.1+, `polymode`, and `jinja2-mode`.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode`.
+
+`poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
+selects the parser belonging to the current polymode span and registers Go
+Template folds for `if`, `range`, `with`, `define`, and `block` actions.
 
 ## License
 
