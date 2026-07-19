@@ -25,6 +25,16 @@
   (dolist (function poly-treesit-fold--advised-functions)
     (should-not (advice-member-p #'poly-treesit-fold--with-parser function))))
 
+(ert-deftest poly-treesit-fold-uses-only-the-primary-parser ()
+  (let ((treesit-primary-parser 'primary))
+    (cl-letf (((symbol-function 'treesit-parser-list)
+               (lambda () '(secondary primary)))
+              ((symbol-function 'treesit-parser-root-node)
+               (lambda (parser)
+                 (should (eq parser 'primary))
+                 'root)))
+      (should (eq (poly-treesit-fold--root-node) 'root)))))
+
 (ert-deftest poly-treesit-fold-folds-go-template-inner-span ()
   (skip-unless (treesit-ready-p 'gotmpl))
   (let ((poly-any-template-host-filename-functions

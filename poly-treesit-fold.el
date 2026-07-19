@@ -16,7 +16,6 @@
 
 (require 'cl-lib)
 (require 'polymode)
-(require 'seq)
 (require 'treesit)
 (require 'treesit-fold)
 (require 'treesit-fold-indicators)
@@ -26,55 +25,16 @@
   :group 'polymode
   :prefix "poly-treesit-fold-")
 
-(defcustom poly-treesit-fold-mode-language-alist
-  '((go-template-ts-mode . gotmpl)
-    (sh-mode . bash))
-  "Tree-sitter languages that cannot be inferred from their major modes."
-  :type '(alist :key-type symbol :value-type symbol)
-  :group 'poly-treesit-fold)
-
-(defvar-local poly-treesit-fold--language-cache nil
-  "Alist mapping major modes to compatible parser languages in this buffer.")
-
 (defconst poly-treesit-fold--advised-functions
   '(treesit-fold--foldable-node-at-pos
     treesit-fold-close-all
     treesit-fold-indicators-refresh)
   "Treesit-fold functions that obtain a root node without a language.")
 
-(defun poly-treesit-fold--query-patterns ()
-  "Return the fold query patterns for the current major mode."
-  (when-let ((ranges (alist-get major-mode treesit-fold-range-alist)))
-    (seq-mapcat (lambda (range) `((,(car range)) @name)) ranges)))
-
-(defun poly-treesit-fold--language ()
-  "Return the parser language compatible with the current fold rules."
-  (or (alist-get major-mode poly-treesit-fold--language-cache)
-      (let* ((parsers (treesit-parser-list))
-             (languages (mapcar #'treesit-parser-language parsers))
-             (mode-name (symbol-name major-mode))
-             (expected
-              (or (alist-get major-mode poly-treesit-fold-mode-language-alist)
-                  (when (string-match "\\`\\(.+\\)-ts-mode\\'" mode-name)
-                    (intern (match-string 1 mode-name)))))
-             (language
-              (if expected
-                  (and (memq expected languages) expected)
-                (when-let ((patterns (poly-treesit-fold--query-patterns)))
-                  (cl-loop for parser in parsers
-                           for candidate = (treesit-parser-language parser)
-                           when (ignore-errors
-                                  (treesit-query-compile candidate patterns))
-                           return candidate)))))
-        (when language
-          (push (cons major-mode language)
-                poly-treesit-fold--language-cache)
-          language))))
-
 (defun poly-treesit-fold--root-node ()
-  "Return the parser root node compatible with the current fold rules."
-  (when-let ((language (poly-treesit-fold--language)))
-    (ignore-errors (treesit-buffer-root-node language))))
+  "Return the root node of the current span's primary parser."
+  (when treesit-primary-parser
+    (ignore-errors (treesit-parser-root-node treesit-primary-parser))))
 
 (defun poly-treesit-fold--with-parser (function &rest args)
   "Call FUNCTION with ARGS using the parser matching the polymode span."
