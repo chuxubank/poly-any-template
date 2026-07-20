@@ -1,7 +1,7 @@
 ;;; poly-treesit-fold.el --- Use treesit-fold in polymode buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (treesit-fold "20260417.1708"))
 ;; Keywords: convenience, folding, languages, polymode, tree-sitter
 ;; URL: https://github.com/chuxubank/poly-any-template
