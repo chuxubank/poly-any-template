@@ -99,6 +99,7 @@ apply `poly-any-template-host-filename-functions'."
                       host-filename)
       (setq host-filename (funcall function host-filename)))))
 
+;;;###autoload
 (defun poly-any-template-host-mode-for-file (filename)
   "Return the major mode selected for FILENAME."
   (when filename
