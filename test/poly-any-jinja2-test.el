@@ -9,7 +9,7 @@
 
 (ert-deftest poly-any-jinja2-detects-host-mode ()
   (let ((auto-mode-alist '(("\\.host\\'" . text-mode))))
-    (should (eq (poly-any-template--get-major-mode-for-file
+    (should (eq (poly-any-template-host-mode-for-file
                  "/tmp/config.host")
                 'text-mode))))
 
@@ -45,6 +45,21 @@
     (should poly-entry)
     (should plain-entry)
     (should (< poly-entry plain-entry))))
+
+(ert-deftest poly-any-jinja2-extra-rule-preserves-host-extension ()
+  (let ((poly-any-jinja2-extra-file-name-rules
+         '("/ansible/.*\\.host\\'"))
+        (auto-mode-alist '(("\\.host\\'" . text-mode))))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/ansible/playbook.host")
+      (normal-mode t)
+      (should (eq major-mode 'text-mode))
+      (should polymode-mode))))
+
+(ert-deftest poly-any-jinja2-standard-suffix-is-removed ()
+  (should (equal
+           (poly-any-template--host-filename "/tmp/config.host.j2" t)
+           "/tmp/config.host")))
 
 (ert-deftest poly-any-jinja2-span-includes-delimiters ()
   (with-temp-buffer

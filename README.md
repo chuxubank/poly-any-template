@@ -18,6 +18,19 @@ before the template suffix is inferred from the filename:
 Plain `.gotmpl` and `.tmpl` files continue to use `go-template-ts-mode`
 directly.
 
+Customize `poly-any-jinja2-extra-file-name-rules` or
+`poly-any-go-template-extra-file-name-rules` for templates selected by path or
+naming convention instead of a template suffix. Each rule may be a regexp or
+a function accepting the file name. The host filename keeps its final
+extension for these rules unless the file still has a standard template
+suffix.
+
+```elisp
+(setq poly-any-jinja2-extra-file-name-rules
+      '("/ansible/.*\\.ya?ml\\'"
+        "/\\(?:group\\|host\\)_vars/"))
+```
+
 ## Installation
 
 ```elisp

@@ -1,7 +1,7 @@
 ;;; poly-any-jinja2.el --- Polymode for Jinja2 templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.6
+;; Version: 0.1.7
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (jinja2-ts-mode "0.1.0"))
 ;; Keywords: languages, polymode, templates, jinja2
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -20,6 +20,24 @@
 The value may be any valid mode-line construct, or nil to hide the lighter."
   :type 'sexp
   :group 'poly-any-template)
+
+(defcustom poly-any-jinja2-extra-file-name-rules nil
+  "Additional file-name rules that select `poly-any-jinja2-mode'.
+These rules are intended for templates identified by their path or naming
+convention rather than a Jinja suffix.  Their final extension is preserved
+when inferring the host mode.  Each rule may be a regexp or a function that
+accepts the file name and returns non-nil when it matches."
+  :type '(repeat (choice regexp function))
+  :group 'poly-any-template)
+
+(defconst poly-any-jinja2--template-suffix-regexp
+  "\\.\\(?:j2\\|jinja\\|jinja2\\)\\'"
+  "Regexp matching standard Jinja2 template suffixes.")
+
+(defun poly-any-jinja2--extra-file-name-p ()
+  "Return non-nil when the current file matches an extra Jinja2 rule."
+  (poly-any-template--extra-file-name-p
+   buffer-file-name poly-any-jinja2-extra-file-name-rules))
 
 (defun poly-any-template--jinja2-head-matcher (direction)
   "Find a Jinja tag start in DIRECTION.
@@ -47,7 +65,14 @@ Return a zero-width match so the inner span includes the opening delimiter."
   (interactive)
   (poly-any-template--activate
    "jinja2" 'poly-any-template-jinja2-innermode
-   'poly-any-jinja2-lighter))
+   'poly-any-jinja2-lighter
+   (and buffer-file-name
+        (string-match-p poly-any-jinja2--template-suffix-regexp
+                        buffer-file-name))))
+
+;;;###autoload
+(add-to-list 'magic-mode-alist
+             '(poly-any-jinja2--extra-file-name-p . poly-any-jinja2-mode))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist

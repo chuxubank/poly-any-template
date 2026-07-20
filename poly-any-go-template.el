@@ -1,7 +1,7 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.6
+;; Version: 0.1.7
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (go-template-ts-mode "0.1.2"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -20,6 +20,24 @@
 The value may be any valid mode-line construct, or nil to hide the lighter."
   :type 'sexp
   :group 'poly-any-template)
+
+(defcustom poly-any-go-template-extra-file-name-rules nil
+  "Additional file-name rules that select `poly-any-go-template-mode'.
+These rules are intended for templates identified by their path or naming
+convention rather than a `.tmpl' or `.gotmpl' suffix.  Their final extension
+is preserved when inferring the host mode.  Each rule may be a regexp or a
+function that accepts the file name and returns non-nil when it matches."
+  :type '(repeat (choice regexp function))
+  :group 'poly-any-template)
+
+(defconst poly-any-go-template--template-suffix-regexp
+  "\\.\\(?:gotmpl\\|tmpl\\)\\'"
+  "Regexp matching standard Go Template suffixes.")
+
+(defun poly-any-go-template--extra-file-name-p ()
+  "Return non-nil when the current file matches an extra Go Template rule."
+  (poly-any-template--extra-file-name-p
+   buffer-file-name poly-any-go-template-extra-file-name-rules))
 
 (defun poly-any-template--go-head-matcher (direction)
   "Find a Go template action start in DIRECTION.
@@ -47,7 +65,15 @@ Return a zero-width match so the inner span includes the opening delimiter."
   (interactive)
   (poly-any-template--activate
    "go-template" 'poly-any-template-go-innermode
-   'poly-any-go-template-lighter))
+   'poly-any-go-template-lighter
+   (and buffer-file-name
+        (string-match-p poly-any-go-template--template-suffix-regexp
+                        buffer-file-name))))
+
+;;;###autoload
+(add-to-list 'magic-mode-alist
+             '(poly-any-go-template--extra-file-name-p
+               . poly-any-go-template-mode))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist

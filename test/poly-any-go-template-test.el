@@ -51,6 +51,34 @@
       (should (eq major-mode 'sh-mode))
       (should polymode-mode))))
 
+(ert-deftest poly-any-go-template-extra-rule-preserves-host-extension ()
+  (let ((poly-any-go-template-extra-file-name-rules
+         '("/modify_[^/]+\\.sh\\'")))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/modify_profile.sh")
+      (normal-mode t)
+      (should (eq major-mode 'sh-mode))
+      (should polymode-mode))))
+
+(ert-deftest poly-any-go-template-standard-suffix-is-removed ()
+  (should (equal
+           (poly-any-template--host-filename "/tmp/config.sh.tmpl" t)
+           "/tmp/config.sh")))
+
+(ert-deftest poly-any-go-template-extra-function-selects-a-template ()
+  (let ((poly-any-go-template-extra-file-name-rules
+         (list (lambda (filename)
+                 (string-match-p "/dot_zprofile\\.tmpl\\'" filename))))
+        (poly-any-template-host-filename-functions
+         (list (lambda (filename)
+                 (replace-regexp-in-string
+                  "/dot_zprofile\\'" "/.zprofile" filename)))))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/dot_zprofile.tmpl")
+      (normal-mode t)
+      (should (eq major-mode 'sh-mode))
+      (should polymode-mode))))
+
 (ert-deftest poly-any-go-template-runs-after-activate-hook ()
   (let ((poly-any-template-after-activate-hook nil)
         activated)

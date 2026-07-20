@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.5
+;; Version: 0.1.6
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -25,7 +25,8 @@
 (defcustom poly-any-template-host-filename-functions nil
   "Functions that transform a template's inferred host filename.
 Each function receives the result of the previous function.  The initial
-value is the template filename without its final extension."
+value is the template filename after removing a recognized template suffix,
+when present."
   :type '(repeat function)
   :group 'poly-any-template)
 
@@ -34,6 +35,9 @@ value is the template filename without its final extension."
 
 (defvar-local poly-any-template--active nil
   "Non-nil in buffers activated by a poly-any template mode.")
+
+(defvar poly-any-template--inferring-host-mode nil
+  "Non-nil while selecting the host mode for a template buffer.")
 
 (defun poly-any-template--indent-bars-filter-blank-lines
     (function beg end &rest args)
@@ -70,29 +74,51 @@ action lines look blank to `indent-bars'."
 (with-eval-after-load 'indent-bars
   (poly-any-template--install-indent-bars-filter))
 
-(defun poly-any-template--host-filename (filename)
-  "Return the host filename inferred from template FILENAME."
-  (let ((host-filename (when filename
-                         (file-name-sans-extension filename))))
+(defun poly-any-template--extra-file-name-p (filename rules)
+  "Return non-nil when FILENAME matches an entry in RULES.
+Each rule may be a regexp or a function called with FILENAME."
+  (and (not poly-any-template--inferring-host-mode)
+       filename
+       (catch 'matched
+         (dolist (rule rules)
+           (when (if (functionp rule)
+                     (funcall rule filename)
+                   (string-match-p rule filename))
+             (throw 'matched t))))))
+
+(defun poly-any-template--host-filename (filename remove-template-suffix)
+  "Return the host filename inferred from template FILENAME.
+Remove the final extension when REMOVE-TEMPLATE-SUFFIX is non-nil, then
+apply `poly-any-template-host-filename-functions'."
+  (let ((host-filename
+         (cond ((not filename) nil)
+               (remove-template-suffix
+                (file-name-sans-extension filename))
+               (t filename))))
     (dolist (function poly-any-template-host-filename-functions
                       host-filename)
       (setq host-filename (funcall function host-filename)))))
 
-(defun poly-any-template--get-major-mode-for-file (filename)
+(defun poly-any-template-host-mode-for-file (filename)
   "Return the major mode selected for FILENAME."
   (when filename
     (ignore-errors
-      (with-temp-buffer
-        (set-visited-file-name filename t t)
-        (set-auto-mode)
-        (unless (eq major-mode 'fundamental-mode)
-          major-mode)))))
+      (let ((poly-any-template--inferring-host-mode t))
+        (with-temp-buffer
+          (set-visited-file-name filename t t)
+          (set-auto-mode)
+          (unless (eq major-mode 'fundamental-mode)
+            major-mode))))))
 
-(defun poly-any-template--activate (dialect innermode lighter-variable)
-  "Activate a polymode for DIALECT using INNERMODE and LIGHTER-VARIABLE."
-  (let* ((base-filename (poly-any-template--host-filename buffer-file-name))
+(defun poly-any-template--activate
+    (dialect innermode lighter-variable remove-template-suffix)
+  "Activate a polymode for DIALECT using INNERMODE and LIGHTER-VARIABLE.
+REMOVE-TEMPLATE-SUFFIX is passed to `poly-any-template--host-filename'."
+  (let* ((base-filename
+          (poly-any-template--host-filename
+           buffer-file-name remove-template-suffix))
          (host-major-mode
-          (or (poly-any-template--get-major-mode-for-file base-filename)
+          (or (poly-any-template-host-mode-for-file base-filename)
               'text-mode))
          (host-mode-symbol
           (intern (format "poly-%s-%s-hostmode" host-major-mode dialect)))
