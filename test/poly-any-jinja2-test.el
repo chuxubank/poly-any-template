@@ -7,6 +7,19 @@
 (require 'poly-any-template)
 (require 'poly-any-jinja2)
 
+(defvar poly-any-template-test-host-hook-count 0)
+
+(defun poly-any-template-test-count-host-hook ()
+  "Count a host-mode hook invocation during a template test."
+  (cl-incf poly-any-template-test-host-hook-count))
+
+(defvar poly-any-template-test-selector-count 0)
+
+(defun poly-any-template-test-host-selector ()
+  "Select text mode and count the selector invocation."
+  (cl-incf poly-any-template-test-selector-count)
+  (text-mode))
+
 (ert-deftest poly-any-jinja2-detects-host-mode ()
   (let ((auto-mode-alist '(("\\.host\\'" . text-mode)))
         (magic-mode-alist
@@ -15,13 +28,85 @@
                  "/tmp/config.host")
                 'text-mode))))
 
-(ert-deftest poly-any-template-host-mode-ignores-set-auto-mode-return-value ()
-  (cl-letf (((symbol-function 'set-auto-mode)
-             (lambda (&rest _)
-               (text-mode)
-               nil)))
-    (should (eq (poly-any-template-host-mode-for-file "/tmp/config.host")
+(ert-deftest poly-any-template-host-mode-does-not-run-the-mode ()
+  (let ((auto-mode-alist '(("\\.host\\'" . text-mode))))
+    (cl-letf (((symbol-function 'set-auto-mode)
+               (lambda (&rest _)
+                 (ert-fail "Host inference called set-auto-mode"))))
+      (should (eq (poly-any-template-host-mode-for-file "/tmp/config.host")
+                  'text-mode)))))
+
+(ert-deftest poly-any-template-host-mode-supports-suffix-chaining ()
+  (let ((auto-mode-alist '(("\\.wrapped\\'" nil t)
+                           ("\\.host\\'" . text-mode))))
+    (should (eq (poly-any-template-host-mode-for-file
+                 "/tmp/config.host.wrapped")
                 'text-mode))))
+
+(ert-deftest poly-any-template-host-mode-keeps-remote-case-sensitivity ()
+  (let ((auto-mode-alist '(("CASE\\.host\\'" . text-mode)))
+        (auto-mode-case-fold nil)
+        (filename "/ssh:user@example.test:/tmp/case.host")
+        checked-filenames)
+    (require 'tramp)
+    (cl-letf (((symbol-function 'file-remote-p)
+               (lambda (_filename) "/ssh:user@example.test:"))
+              ((symbol-function 'file-name-case-insensitive-p)
+               (lambda (candidate)
+                 (push candidate checked-filenames)
+                 nil)))
+      (should-not (poly-any-template-host-mode-for-file filename))
+      (should (member filename checked-filenames))
+      (should-not (member "/tmp/case.host" checked-filenames)))))
+
+(ert-deftest poly-any-template-host-mode-applies-symbol-remapping ()
+  (let ((auto-mode-alist '(("\\.host\\'" . text-mode)))
+        (major-mode-remap-alist '((text-mode . prog-mode)))
+        (major-mode-remap-defaults nil))
+    (should (eq (poly-any-template-host-mode-for-file "/tmp/config.host")
+                'prog-mode))))
+
+(ert-deftest poly-any-template-host-mode-recognizes-special-filenames ()
+  (let ((major-mode-remap-alist nil)
+        (major-mode-remap-defaults nil))
+    (should (eq (poly-any-template-host-mode-for-file "/tmp/Brewfile")
+                'ruby-mode))
+    (should (eq (poly-any-template-host-mode-for-file "/tmp/.zprofile")
+                'sh-mode))))
+
+(ert-deftest poly-any-template-runs-host-mode-hook-once ()
+  (let ((auto-mode-alist '(("\\.host\\'" . text-mode)))
+        (poly-any-template-test-host-hook-count 0)
+        (text-mode-hook '(poly-any-template-test-count-host-hook)))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.host.j2")
+      (poly-any-jinja2-mode)
+      (should polymode-mode)
+      (should (= poly-any-template-test-host-hook-count 1)))))
+
+(ert-deftest poly-any-template-defers-named-host-selector ()
+  (let ((auto-mode-alist
+         '(("\\.selected\\'" . poly-any-template-test-host-selector)))
+        (poly-any-template-test-selector-count 0))
+    (should (eq (poly-any-template-host-mode-for-file
+                 "/tmp/config.selected")
+                'poly-any-template-test-host-selector))
+    (should (= poly-any-template-test-selector-count 0))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.selected.j2")
+      (poly-any-jinja2-mode)
+      (should polymode-mode)
+      (should (= poly-any-template-test-selector-count 1)))))
+
+(ert-deftest poly-any-template-rejects-unnamed-or-fundamental-hosts ()
+  (let ((auto-mode-alist
+         `(("\\.anonymous\\'" . ,(lambda (&optional _argument) (text-mode)))
+           ("\\.unknown\\'" . poly-any-template-test-unknown-mode)
+           ("\\.fundamental\\'" . fundamental-mode))))
+    (dolist (filename '("/tmp/config.anonymous"
+                        "/tmp/config.unknown"
+                        "/tmp/config.fundamental"))
+      (should-not (poly-any-template-host-mode-for-file filename)))))
 
 (ert-deftest poly-any-jinja2-configures-inner-mode ()
   (with-temp-buffer
@@ -99,6 +184,41 @@
       (should (equal (buffer-substring-no-properties
                       (nth 1 span) (nth 2 span))
                      "{{ render(value) }}")))))
+
+(ert-deftest poly-any-jinja2-span-ignores-delimiters-in-strings ()
+  (dolist (tag '("{{ \"}}\" ~ value }}"
+                 "{{ '}}' ~ value }}"
+                 "{{ \"%}\" ~ value }}"
+                 "{% set marker = \"%}\" %}"
+                 "{% set marker = '%}' %}"
+                 "{% set marker = \"}}\" %}"
+                 "{{ \"\\\"}}\" ~ value }}"))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.text.j2")
+      (insert "name=" tag)
+      (poly-any-jinja2-mode)
+      (goto-char (point-min))
+      (search-forward (if (string-match-p "value" tag)
+                          "value"
+                        "marker"))
+      (let ((span (pm-innermost-span)))
+        (should (eq (car span) 'body))
+        (should (equal (buffer-substring-no-properties
+                        (nth 1 span) (nth 2 span))
+                       tag))))))
+
+(ert-deftest poly-any-jinja2-comment-uses-its-corresponding-delimiter ()
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/config.text.j2")
+    (insert "before {# literal }} / %} #} after")
+    (poly-any-jinja2-mode)
+    (goto-char (point-min))
+    (search-forward "literal")
+    (let ((span (pm-innermost-span)))
+      (should (eq (car span) 'body))
+      (should (equal (buffer-substring-no-properties
+                      (nth 1 span) (nth 2 span))
+                     "{# literal }} / %} #}")))))
 
 (ert-deftest poly-any-jinja2-fontifies-inner-mode-on-first-pass ()
   (skip-unless (treesit-ready-p 'jinja))

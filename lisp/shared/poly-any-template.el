@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.10
+;; Version: 0.1.11
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -36,9 +36,6 @@ when present."
 
 (defvar-local poly-any-template--indent-bars-blank-line-function nil
   "Original indent-bars blank-line display function for this buffer.")
-
-(defvar poly-any-template--inferring-host-mode nil
-  "Non-nil while selecting the host mode for a template buffer.")
 
 (defun poly-any-template--indent-bars-filter-blank-lines
     (function beg end &rest args)
@@ -84,8 +81,7 @@ action lines look blank to `indent-bars'."
 (defun poly-any-template--extra-file-name-p (filename rules)
   "Return non-nil when FILENAME matches an entry in RULES.
 Each rule may be a regexp or a function called with FILENAME."
-  (and (not poly-any-template--inferring-host-mode)
-       filename
+  (and filename
        (catch 'matched
          (dolist (rule rules)
            (when (if (functionp rule)
@@ -106,20 +102,102 @@ apply `poly-any-template-host-filename-functions'."
                       host-filename)
       (setq host-filename (funcall function host-filename)))))
 
+(defun poly-any-template--lexical-tail-matcher
+    (delimiter quote-characters &optional raw-quote-characters block-comment)
+  "Find lexical DELIMITER and return a zero-width match.
+QUOTE-CHARACTERS is a list of characters that open and close strings.
+Backslash escapes the following character inside those strings, except when
+the quote character is also present in RAW-QUOTE-CHARACTERS.  BLOCK-COMMENT,
+when non-nil, is a cons of its opening and closing strings."
+  (let ((delimiter-regexp (regexp-quote delimiter))
+        (comment-start-regexp
+         (and block-comment (regexp-quote (car block-comment))))
+        (comment-end-regexp
+         (and block-comment (regexp-quote (cdr block-comment))))
+        quote
+        in-comment
+        found)
+    (while (and (not found) (< (point) (point-max)))
+      (let ((character (char-after)))
+        (cond
+         ((and in-comment (looking-at-p comment-end-regexp))
+          (forward-char (length (cdr block-comment)))
+          (setq in-comment nil))
+         (in-comment
+          (forward-char 1))
+         ((and (not quote) (looking-at-p delimiter-regexp))
+          (forward-char (length delimiter))
+          (setq found (point)))
+         ((and (not quote) comment-start-regexp
+               (looking-at-p comment-start-regexp))
+          (forward-char (length (car block-comment)))
+          (setq in-comment t))
+         ((not quote)
+          (when (memq character quote-characters)
+            (setq quote character))
+          (forward-char 1))
+         ((and (eq character ?\\)
+               (not (memq quote raw-quote-characters)))
+          (forward-char (min 2 (- (point-max) (point)))))
+         ((eq character quote)
+          (setq quote nil)
+          (forward-char 1))
+         (t
+          (forward-char 1)))))
+    (when found
+      (cons found found))))
+
+(defun poly-any-template--auto-mode-match (filename case-insensitive-p)
+  "Return the `auto-mode-alist' value matching FILENAME.
+CASE-INSENSITIVE-P describes the filesystem of the original template file."
+  (if case-insensitive-p
+      (let ((case-fold-search t))
+        (assoc-default filename auto-mode-alist #'string-match))
+    (or (let ((case-fold-search nil))
+          (assoc-default filename auto-mode-alist #'string-match))
+        (and auto-mode-case-fold
+             (let ((case-fold-search t))
+               (assoc-default filename auto-mode-alist #'string-match))))))
+
+(defun poly-any-template--auto-mode-for-file (filename)
+  "Return the mode function selected for FILENAME without calling it."
+  (let ((name (file-name-sans-versions filename))
+        (remote-id (file-remote-p filename))
+        (case-insensitive-p (file-name-case-insensitive-p filename))
+        mode)
+    (when (and (stringp remote-id)
+               (string-match (regexp-quote remote-id) name))
+      (setq name (substring name (match-end 0))))
+    (while name
+      (setq mode (poly-any-template--auto-mode-match
+                  name case-insensitive-p))
+      (if (and (not (functionp mode))
+               (consp mode)
+               (cadr mode))
+          (setq mode (car mode)
+                name (substring name 0 (match-beginning 0)))
+        (setq name nil)))
+    mode))
+
+(defun poly-any-template--remap-mode (mode)
+  "Return MODE after major-mode remapping when it remains a named function."
+  (let ((remapped
+         (if (fboundp 'major-mode-remap)
+             (funcall 'major-mode-remap mode)
+           (or (cdr (assq mode major-mode-remap-alist)) mode))))
+    (when (and (symbolp remapped)
+               (functionp remapped)
+               (not (eq remapped 'fundamental-mode)))
+      remapped)))
+
 ;;;###autoload
 (defun poly-any-template-host-mode-for-file (filename)
-  "Return the major mode selected for FILENAME."
+  "Return the named mode function selected for FILENAME.
+Only `auto-mode-alist' is consulted, and the selected function is not run."
   (when filename
     (ignore-errors
-      (let ((poly-any-template--inferring-host-mode t)
-            (magic-mode-alist nil)
-            (magic-fallback-mode-alist nil)
-            (interpreter-mode-alist nil))
-        (with-temp-buffer
-          (setq buffer-file-name filename)
-          (set-auto-mode)
-          (unless (eq major-mode 'fundamental-mode)
-            major-mode))))))
+      (when-let ((mode (poly-any-template--auto-mode-for-file filename)))
+        (poly-any-template--remap-mode mode)))))
 
 (defun poly-any-template--activate
     (dialect innermode lighter-variable remove-template-suffix

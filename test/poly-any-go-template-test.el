@@ -140,6 +140,35 @@
                       (nth 1 span) (nth 2 span))
                      "{{ printf \"%s\" .Name }}")))))
 
+(ert-deftest poly-any-go-template-span-ignores-delimiters-in-strings ()
+  (dolist (action '("{{ printf \"}}\" .Name }}"
+                    "{{ printf `}}` .Name }}"
+                    "{{ printf \"\\\"}}\" .Name }}"))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.text.tmpl")
+      (insert "name=" action)
+      (poly-any-go-template-mode)
+      (goto-char (point-min))
+      (search-forward ".Name")
+      (let ((span (pm-innermost-span)))
+        (should (eq (car span) 'body))
+        (should (equal (buffer-substring-no-properties
+                        (nth 1 span) (nth 2 span))
+                       action))))))
+
+(ert-deftest poly-any-go-template-span-ignores-delimiters-in-comments ()
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/config.text.tmpl")
+    (insert "before {{/* literal }} inside */}} after")
+    (poly-any-go-template-mode)
+    (goto-char (point-min))
+    (search-forward "inside")
+    (let ((span (pm-innermost-span)))
+      (should (eq (car span) 'body))
+      (should (equal (buffer-substring-no-properties
+                      (nth 1 span) (nth 2 span))
+                     "{{/* literal }} inside */}}")))))
+
 (ert-deftest poly-any-go-template-fontifies-host-and-inner-mode ()
   (skip-unless (and (fboundp 'yaml-ts-mode) (treesit-ready-p 'yaml)
                     (treesit-ready-p 'gotmpl)))

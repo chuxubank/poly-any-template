@@ -1,8 +1,8 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.11
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.8") (go-template-ts-mode "0.1.4"))
+;; Version: 0.1.12
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.11") (go-template-ts-mode "0.1.7"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -51,8 +51,8 @@ Return a zero-width match so the inner span includes the opening delimiter."
 
 (defun poly-any-template--go-tail-matcher (_direction)
   "Find the current Go template action end and return a zero-width match."
-  (when (re-search-forward "-?}}" nil t)
-    (cons (match-end 0) (match-end 0))))
+  (poly-any-template--lexical-tail-matcher
+   "}}" '(?\" ?`) '(?`) '("/*" . "*/")))
 
 (define-innermode poly-any-template-go-innermode
   :mode #'go-template-ts-mode

@@ -99,7 +99,7 @@ marker or a global marker should be ignored.
 configured `yaml-ts-mode` file association can still take precedence over
 `yaml-mode` for the host buffer.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
-`go-template-ts-mode` 0.1.4+.
+`go-template-ts-mode` 0.1.7+.
 
 Customize `poly-any-jinja2-lighter` and `poly-any-go-template-lighter` to
 change or hide their mode-line lighters. Both variables accept any mode-line
