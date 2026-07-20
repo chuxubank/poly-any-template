@@ -4,7 +4,8 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.6
+;; Version: 0.1.7
+;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -107,43 +108,49 @@ apply `poly-any-template-host-filename-functions'."
       (let ((poly-any-template--inferring-host-mode t))
         (with-temp-buffer
           (set-visited-file-name filename t t)
-          (set-auto-mode)
-          (unless (eq major-mode 'fundamental-mode)
-            major-mode))))))
+          (when (set-auto-mode)
+            (unless (eq major-mode 'fundamental-mode)
+              major-mode)))))))
 
 (defun poly-any-template--activate
-    (dialect innermode lighter-variable remove-template-suffix)
+    (dialect innermode lighter-variable remove-template-suffix
+             &optional hostless-mode)
   "Activate a polymode for DIALECT using INNERMODE and LIGHTER-VARIABLE.
-REMOVE-TEMPLATE-SUFFIX is passed to `poly-any-template--host-filename'."
+REMOVE-TEMPLATE-SUFFIX is passed to `poly-any-template--host-filename'.
+When no host mode is inferred, call HOSTLESS-MODE if it is non-nil; otherwise
+use `text-mode' as the polymode host."
   (let* ((base-filename
           (poly-any-template--host-filename
            buffer-file-name remove-template-suffix))
          (host-major-mode
-          (or (poly-any-template-host-mode-for-file base-filename)
-              'text-mode))
-         (host-mode-symbol
-          (intern (format "poly-%s-%s-hostmode" host-major-mode dialect)))
-         (polymode-symbol
-          (intern (format "poly-%s-%s-mode"
-                          (string-remove-suffix
-                           "-mode" (symbol-name host-major-mode))
-                          dialect))))
-    (unless (fboundp host-mode-symbol)
-      (eval `(define-hostmode ,host-mode-symbol
-               :mode ',host-major-mode
-               :protect-font-lock t)
-            t))
-    (unless (fboundp polymode-symbol)
-      (eval `(define-polymode ,polymode-symbol
-               :hostmode ',host-mode-symbol
-               :innermodes '(,innermode)
-               :lighter ',lighter-variable) t))
-    (funcall polymode-symbol)
-    (setq-local poly-any-template--active t)
-    (when (and (bound-and-true-p indent-bars-mode)
-               (fboundp 'jit-lock-refontify))
-      (funcall 'jit-lock-refontify))
-    (run-hooks 'poly-any-template-after-activate-hook)))
+          (poly-any-template-host-mode-for-file base-filename)))
+    (if (and (not host-major-mode) hostless-mode)
+        (funcall hostless-mode)
+      (let* ((host-major-mode (or host-major-mode 'text-mode))
+             (host-mode-symbol
+              (intern (format "poly-%s-%s-hostmode"
+                              host-major-mode dialect)))
+             (polymode-symbol
+              (intern (format "poly-%s-%s-mode"
+                              (string-remove-suffix
+                               "-mode" (symbol-name host-major-mode))
+                              dialect))))
+        (unless (fboundp host-mode-symbol)
+          (eval `(define-hostmode ,host-mode-symbol
+                   :mode ',host-major-mode
+                   :protect-font-lock t)
+                t))
+        (unless (fboundp polymode-symbol)
+          (eval `(define-polymode ,polymode-symbol
+                   :hostmode ',host-mode-symbol
+                   :innermodes '(,innermode)
+                   :lighter ',lighter-variable) t))
+        (funcall polymode-symbol)
+        (setq-local poly-any-template--active t)
+        (when (and (bound-and-true-p indent-bars-mode)
+                   (fboundp 'jit-lock-refontify))
+          (funcall 'jit-lock-refontify))
+        (run-hooks 'poly-any-template-after-activate-hook)))))
 
 (provide 'poly-any-template)
 ;;; poly-any-template.el ends here

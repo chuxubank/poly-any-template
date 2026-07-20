@@ -1,19 +1,26 @@
 EMACS ?= emacs
 BATCH = $(EMACS) -Q --batch
 JINJA2_TS_MODE_PATH ?= ../jinja2-ts-mode
-LOAD_PATH = -L . -L test -L $(JINJA2_TS_MODE_PATH)
+SHARED_DIR = lisp/shared
+JINJA2_DIR = lisp/jinja2
+GO_TEMPLATE_DIR = lisp/go-template
+TREESIT_FOLD_DIR = lisp/treesit-fold
+LOAD_PATH = -L $(SHARED_DIR) -L $(JINJA2_DIR) -L $(GO_TEMPLATE_DIR) \
+	-L $(TREESIT_FOLD_DIR) -L test -L $(JINJA2_TS_MODE_PATH)
 GO_TEMPLATE_URL = https://github.com/chuxubank/go-template-ts-mode
 JINJA2_TS_MODE_URL = https://github.com/chuxubank/jinja2-ts-mode
 
-SOURCES = poly-any-template.el poly-any-jinja2.el poly-any-go-template.el \
-	poly-treesit-fold.el
+SOURCES = $(SHARED_DIR)/poly-any-template.el \
+	$(JINJA2_DIR)/poly-any-jinja2.el \
+	$(GO_TEMPLATE_DIR)/poly-any-go-template.el \
+	$(TREESIT_FOLD_DIR)/poly-treesit-fold.el
 
 PACKAGE_SETUP = \
 	--eval "(require 'package)" \
 	--eval "(package-initialize)" \
 	--eval "(setq load-prefer-newer t)" \
 	--eval "(when (file-directory-p \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\") (add-to-list 'treesit-extra-load-path \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\"))" \
-	--eval "(setq load-path (cons \"$(CURDIR)\" (delete \"$(CURDIR)\" load-path)))" \
+	--eval "(dolist (directory '(\"$(CURDIR)/$(SHARED_DIR)\" \"$(CURDIR)/$(JINJA2_DIR)\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)\")) (setq load-path (cons directory (delete directory load-path))))" \
 	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))"
 
 ARCHIVES = \

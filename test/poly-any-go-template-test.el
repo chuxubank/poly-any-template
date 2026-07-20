@@ -12,6 +12,13 @@
   (should (eq (eieio-oref poly-any-template-go-innermode 'mode)
               'go-template-ts-mode)))
 
+(ert-deftest poly-any-go-template-uses-pure-mode-without-a-host ()
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/values.tmpl")
+    (poly-any-go-template-mode)
+    (should (eq major-mode 'go-template-ts-mode))
+    (should-not polymode-mode)))
+
 (ert-deftest poly-any-go-template-uses-customizable-lighter ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/config.text.tmpl")

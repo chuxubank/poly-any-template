@@ -1,9 +1,12 @@
 # poly-any-template
 
-This repository contains three independently installable packages:
+This repository contains three independently installable user packages:
 `poly-any-jinja2`, `poly-any-go-template`, and `poly-treesit-fold`. The two
-template modes share the small helper in `poly-any-template.el`; the mode
-before the template suffix is inferred from the filename:
+template modes depend on the internal `poly-any-template` shared package.
+Each package has its own `lisp-dir`, so installing multiple packages from this
+repository cannot expose duplicate copies of the shared implementation on
+`load-path`. The mode before the template suffix is inferred from the
+filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -40,22 +43,27 @@ suffix.
 (use-package go-template-ts-mode
   :vc (:url "https://github.com/chuxubank/go-template-ts-mode"))
 
+(use-package poly-any-template
+  :vc (poly-any-template
+       :url "https://github.com/chuxubank/poly-any-template"
+       :lisp-dir "lisp/shared"))
+
 (use-package poly-any-jinja2
   :vc (poly-any-jinja2
        :url "https://github.com/chuxubank/poly-any-template"
-       :main-file "poly-any-jinja2.el")
+       :lisp-dir "lisp/jinja2")
   :demand t)
 
 (use-package poly-any-go-template
   :vc (poly-any-go-template
        :url "https://github.com/chuxubank/poly-any-template"
-       :main-file "poly-any-go-template.el")
+       :lisp-dir "lisp/go-template")
   :demand t)
 
 (use-package poly-treesit-fold
   :vc (poly-treesit-fold
        :url "https://github.com/chuxubank/poly-any-template"
-       :main-file "poly-treesit-fold.el")
+       :lisp-dir "lisp/treesit-fold")
   :demand t
   :config
   (poly-treesit-fold-mode 1))
