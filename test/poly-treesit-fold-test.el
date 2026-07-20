@@ -4,6 +4,7 @@
 
 (require 'ert)
 (require 'poly-any-go-template)
+(require 'poly-any-jinja2)
 (require 'poly-treesit-fold)
 (require 'toml-ts-mode nil t)
 
@@ -13,6 +14,14 @@
                     define_action block_action))
       (should (eq (alist-get type ranges)
                   #'poly-treesit-fold-range-go-template-action)))))
+
+(ert-deftest poly-treesit-fold-registers-jinja2-ranges ()
+  (let ((ranges (alist-get 'jinja2-ts-mode treesit-fold-range-alist)))
+    (dolist (type '(autoescape_block block_block call_block filter_block
+                    for_block if_block macro_block raw_block set_block
+                    trans_block with_block))
+      (should (eq (alist-get type ranges)
+                  #'poly-treesit-fold-range-jinja-block)))))
 
 (ert-deftest poly-treesit-fold-mode-manages-advice ()
   (unwind-protect
@@ -65,6 +74,32 @@
                                     root '((if_action) @node))))
                              (overlay (treesit-fold-close (cdr capture))))
                    (should (eq (treesit-node-language root) 'gotmpl))
+                   (should (eq (overlay-get overlay 'creator) 'treesit-fold))
+                   (setq folded t)))))
+            (should folded)))
+      (poly-treesit-fold-mode -1))))
+
+(ert-deftest poly-treesit-fold-folds-jinja2-inner-span ()
+  (skip-unless (treesit-ready-p 'jinja))
+  (let (folded)
+    (unwind-protect
+        (progn
+          (poly-treesit-fold-mode 1)
+          (with-temp-buffer
+            (setq buffer-file-name "/tmp/config.text.j2")
+            (insert "{% if enabled %}\n"
+                    "value\n"
+                    "{% endif %}\n")
+            (poly-any-jinja2-mode)
+            (pm-map-over-spans
+             (lambda (span)
+               (when (and (eq (car span) 'body) (not folded))
+                 (when-let* ((root (poly-treesit-fold--root-node))
+                             (capture
+                              (car (treesit-query-capture
+                                    root '((if_block) @node))))
+                             (overlay (treesit-fold-close (cdr capture))))
+                   (should (eq (treesit-node-language root) 'jinja))
                    (should (eq (overlay-get overlay 'creator) 'treesit-fold))
                    (setq folded t)))))
             (should folded)))

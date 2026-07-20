@@ -10,7 +10,7 @@
 
 ;; Make `treesit-fold' select the tree-sitter parser associated with the
 ;; current polymode span.  The package also registers folding ranges for
-;; `go-template-ts-mode'.
+;; `go-template-ts-mode' and `jinja2-ts-mode'.
 
 ;;; Code:
 
@@ -67,6 +67,23 @@
                 (cons type #'poly-treesit-fold-range-go-template-action))
               '(if_action range_action with_action
                 define_action block_action)))
+
+(defun poly-treesit-fold-range-jinja-block (node offset)
+  "Return the fold range for Jinja block NODE using OFFSET."
+  (let ((count (treesit-node-child-count node t)))
+    (when (> count 1)
+      (let ((opening (treesit-node-child node 0 t))
+            (closing (treesit-node-child node (1- count) t)))
+        (when (<= (treesit-node-end opening) (treesit-node-start closing))
+          (cons (+ (treesit-node-end opening) (car offset))
+                (+ (treesit-node-start closing) (cdr offset))))))))
+
+(setf (alist-get 'jinja2-ts-mode treesit-fold-range-alist)
+      (mapcar (lambda (type)
+                (cons type #'poly-treesit-fold-range-jinja-block))
+              '(autoescape_block block_block call_block filter_block
+                for_block if_block macro_block raw_block set_block
+                trans_block with_block)))
 
 ;;;###autoload
 (define-minor-mode poly-treesit-fold-mode
