@@ -94,8 +94,10 @@ marker or a global marker should be ignored.
 
 `poly-any-jinja2` requires Emacs 29.1+, `polymode`, and
 `jinja2-ts-mode` 0.1.1+.
-`poly-ansible-jinja2` additionally requires `ansible` and `ansible-doc`; it
-does not depend on the older `poly-ansible` package.
+`poly-ansible-jinja2` additionally requires `ansible`, `ansible-doc`, and
+`yaml-mode`; it does not depend on the older `poly-ansible` package. A
+configured `yaml-ts-mode` file association can still take precedence over
+`yaml-mode` for the host buffer.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode` 0.1.4+.
 

@@ -1,8 +1,8 @@
 ;;; poly-ansible-jinja2.el --- Jinja2 polymode integration for Ansible -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (ansible "0") (ansible-doc "0") (poly-any-jinja2 "0.1.11"))
+;; Version: 0.1.1
+;; Package-Requires: ((emacs "29.1") (ansible "0") (ansible-doc "0") (poly-any-jinja2 "0.1.11") (yaml-mode "0.0.15"))
 ;; Keywords: languages, polymode, templates, ansible
 ;; URL: https://github.com/chuxubank/poly-any-template
 

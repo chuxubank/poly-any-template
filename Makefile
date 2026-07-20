@@ -51,6 +51,7 @@ install-deps:
 		--eval "(package-install 'treesit-fold)" \
 		--eval "(package-install 'ansible)" \
 		--eval "(package-install 'ansible-doc)" \
+		--eval "(package-install 'yaml-mode)" \
 		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))" \
 		--eval "(unless (package-installed-p 'jinja2-ts-mode) (package-vc-install \"$(JINJA2_TS_MODE_URL)\"))" \
 		--eval "(require 'jinja2-ts-mode)" \
