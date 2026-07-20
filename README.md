@@ -48,6 +48,10 @@ directly.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode`.
 
+Customize `poly-any-jinja2-lighter` and `poly-any-go-template-lighter` to
+change or hide their mode-line lighters. Both variables accept any mode-line
+construct.
+
 `poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
 selects the parser belonging to the current polymode span and registers Go
 Template folds for `if`, `range`, `with`, `define`, and `block` actions.

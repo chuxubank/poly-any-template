@@ -1,7 +1,7 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (go-template-ts-mode "0.1.0"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -14,6 +14,12 @@
 
 (require 'poly-any-template)
 (require 'go-template-ts-mode)
+
+(defcustom poly-any-go-template-lighter " GoTpl"
+  "Mode-line lighter used by Go Template polymodes.
+The value may be any valid mode-line construct, or nil to hide the lighter."
+  :type 'sexp
+  :group 'poly-any-template)
 
 (defun poly-any-template--go-head-matcher (direction)
   "Find a Go template action start in DIRECTION.
@@ -40,7 +46,8 @@ Return a zero-width match so the inner span includes the opening delimiter."
   "Edit Go templates using the mode inferred from the host filename."
   (interactive)
   (poly-any-template--activate
-   "go-template" 'poly-any-template-go-innermode " GoTpl"))
+   "go-template" 'poly-any-template-go-innermode
+   'poly-any-go-template-lighter))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist

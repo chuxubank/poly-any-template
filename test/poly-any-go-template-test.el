@@ -11,6 +11,16 @@
   (should (eq (eieio-oref poly-any-template-go-innermode 'mode)
               'go-template-ts-mode)))
 
+(ert-deftest poly-any-go-template-uses-customizable-lighter ()
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/config.text.tmpl")
+    (poly-any-go-template-mode)
+    (let* ((mode (eieio-oref pm/polymode '-minor-mode))
+           (lighter (cadr (assq mode minor-mode-alist))))
+      (should (eq lighter 'poly-any-go-template-lighter))
+      (let ((poly-any-go-template-lighter " Go"))
+        (should (equal (symbol-value lighter) " Go"))))))
+
 (ert-deftest poly-any-go-template-registers-file-patterns-in-order ()
   (let ((poly-entry (cl-position '("\\.[^./]+\\.\\(?:gotmpl\\|tmpl\\)\\'"
                                   . poly-any-go-template-mode)

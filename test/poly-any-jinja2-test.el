@@ -22,6 +22,16 @@
                (eq (eieio-oref innermode 'mode) 'jinja2-mode))
              (eieio-oref pm/polymode '-innermodes)))))
 
+(ert-deftest poly-any-jinja2-uses-customizable-lighter ()
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/config.text.j2")
+    (poly-any-jinja2-mode)
+    (let* ((mode (eieio-oref pm/polymode '-minor-mode))
+           (lighter (cadr (assq mode minor-mode-alist))))
+      (should (eq lighter 'poly-any-jinja2-lighter))
+      (let ((poly-any-jinja2-lighter " Jinja"))
+        (should (equal (symbol-value lighter) " Jinja"))))))
+
 (ert-deftest poly-any-jinja2-registers-file-pattern ()
   (should (member '("\\.\\(?:j2\\|jinja2\\)\\'"
                    . poly-any-jinja2-mode)

@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -50,8 +50,8 @@ value is the template filename without its final extension."
         (unless (eq major-mode 'fundamental-mode)
           major-mode)))))
 
-(defun poly-any-template--activate (dialect innermode lighter)
-  "Activate a polymode for DIALECT using INNERMODE and LIGHTER."
+(defun poly-any-template--activate (dialect innermode lighter-variable)
+  "Activate a polymode for DIALECT using INNERMODE and LIGHTER-VARIABLE."
   (let* ((base-filename (poly-any-template--host-filename buffer-file-name))
          (host-major-mode
           (or (poly-any-template--get-major-mode-for-file base-filename)
@@ -72,7 +72,7 @@ value is the template filename without its final extension."
       (eval `(define-polymode ,polymode-symbol
                :hostmode ',host-mode-symbol
                :innermodes '(,innermode)
-               :lighter ,lighter) t))
+               :lighter ',lighter-variable) t))
     (funcall polymode-symbol)
     (run-hooks 'poly-any-template-after-activate-hook)))
 
