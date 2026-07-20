@@ -8,21 +8,6 @@
 (require 'poly-treesit-fold)
 (require 'toml-ts-mode nil t)
 
-(ert-deftest poly-treesit-fold-registers-go-template-ranges ()
-  (let ((ranges (alist-get 'go-template-ts-mode treesit-fold-range-alist)))
-    (dolist (type '(if_action range_action with_action
-                    define_action block_action))
-      (should (eq (alist-get type ranges)
-                  #'poly-treesit-fold-range-go-template-action)))))
-
-(ert-deftest poly-treesit-fold-registers-jinja2-ranges ()
-  (let ((ranges (alist-get 'jinja2-ts-mode treesit-fold-range-alist)))
-    (dolist (type '(autoescape_block block_block call_block filter_block
-                    for_block if_block macro_block raw_block set_block
-                    trans_block with_block))
-      (should (eq (alist-get type ranges)
-                  #'poly-treesit-fold-range-jinja-block)))))
-
 (ert-deftest poly-treesit-fold-mode-manages-advice ()
   (unwind-protect
       (progn

@@ -1,7 +1,7 @@
 ;;; poly-treesit-fold.el --- Use treesit-fold in polymode buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (treesit-fold "20260417.1708"))
 ;; Keywords: convenience, folding, languages, polymode, tree-sitter
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -9,8 +9,8 @@
 ;;; Commentary:
 
 ;; Make `treesit-fold' select the tree-sitter parser associated with the
-;; current polymode span.  The package also registers folding ranges for
-;; `go-template-ts-mode' and `jinja2-ts-mode'.
+;; current polymode span.  Language modes remain responsible for registering
+;; their own folding ranges.
 
 ;;; Code:
 
@@ -48,42 +48,6 @@
                          (funcall root-function language tag)
                        root))))
           (apply function args))))))
-
-(defun poly-treesit-fold-range-go-template-action (node offset)
-  "Return the fold range for Go-template action NODE using OFFSET."
-  (let (begin end)
-    (dotimes (index (treesit-node-child-count node))
-      (let* ((child (treesit-node-child node index))
-             (type (treesit-node-type child)))
-        (when (and (not begin) (member type '("}}" "-}}")))
-          (setq begin (treesit-node-end child)))
-        (when (member type '("{{" "{{-"))
-          (setq end (treesit-node-start child)))))
-    (when (and begin end (<= begin end))
-      (cons (+ begin (car offset)) (+ end (cdr offset))))))
-
-(setf (alist-get 'go-template-ts-mode treesit-fold-range-alist)
-      (mapcar (lambda (type)
-                (cons type #'poly-treesit-fold-range-go-template-action))
-              '(if_action range_action with_action
-                define_action block_action)))
-
-(defun poly-treesit-fold-range-jinja-block (node offset)
-  "Return the fold range for Jinja block NODE using OFFSET."
-  (let ((count (treesit-node-child-count node t)))
-    (when (> count 1)
-      (let ((opening (treesit-node-child node 0 t))
-            (closing (treesit-node-child node (1- count) t)))
-        (when (<= (treesit-node-end opening) (treesit-node-start closing))
-          (cons (+ (treesit-node-end opening) (car offset))
-                (+ (treesit-node-start closing) (cdr offset))))))))
-
-(setf (alist-get 'jinja2-ts-mode treesit-fold-range-alist)
-      (mapcar (lambda (type)
-                (cons type #'poly-treesit-fold-range-jinja-block))
-              '(autoescape_block block_block call_block filter_block
-                for_block if_block macro_block raw_block set_block
-                trans_block with_block)))
 
 ;;;###autoload
 (define-minor-mode poly-treesit-fold-mode

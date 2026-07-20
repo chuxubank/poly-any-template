@@ -61,8 +61,9 @@ are filtered from the host's blank-line pass so template-action lines do not
 gain trailing guides, while real blank lines continue to display normally.
 
 `poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
-selects the parser belonging to the current polymode span and registers block
-folds for Go Template and Jinja2.
+selects the parser belonging to the current polymode span. Fold ranges remain
+owned by their language modes; `go-template-ts-mode` and `jinja2-ts-mode`
+provide their integrations automatically when `treesit-fold` is loaded.
 
 ## License
 
