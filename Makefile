@@ -34,8 +34,8 @@ ARCHIVES = \
 	--eval "(add-to-list 'package-archives '(\"jcs-elpa\" . \"https://jcs-emacs.github.io/jcs-elpa/packages/\") t)" \
 	--eval "(package-initialize)"
 
-.PHONY: all install-deps autoloads compile test test-jinja2 test-go-template \
-	test-treesit-fold clean
+.PHONY: all install-deps autoloads compile check-grammars test test-jinja2 \
+	test-go-template test-treesit-fold clean
 
 all: compile test
 
@@ -48,7 +48,12 @@ install-deps:
 		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))" \
 		--eval "(unless (package-installed-p 'jinja2-ts-mode) (package-vc-install \"$(JINJA2_TS_MODE_URL)\"))" \
 		--eval "(require 'jinja2-ts-mode)" \
-		--eval "(unless (treesit-language-available-p 'jinja) (jinja2-ts-mode-install-grammar))"
+		--eval "(unless (treesit-language-available-p 'jinja) (jinja2-ts-mode-install-grammar))" \
+		--eval "(require 'go-template-ts-mode)" \
+		--eval "(unless (treesit-language-available-p 'gotmpl) (go-template-ts-mode-install-grammar))" \
+		--eval "(setf (alist-get 'yaml treesit-language-source-alist) '(\"https://github.com/tree-sitter-grammars/tree-sitter-yaml\" \"v0.7.2\"))" \
+		--eval "(setf (alist-get 'toml treesit-language-source-alist) '(\"https://github.com/tree-sitter-grammars/tree-sitter-toml\"))" \
+		--eval "(dolist (language '(yaml toml)) (unless (treesit-language-available-p language) (treesit-install-language-grammar language)))"
 
 autoloads:
 	rm -f $(AUTOLOADS)
@@ -62,6 +67,11 @@ compile: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		--eval "(setq byte-compile-error-on-warn t)" \
 		-f batch-byte-compile $(SOURCES)
+
+check-grammars:
+	$(BATCH) $(PACKAGE_SETUP) \
+		--eval "(require 'treesit)" \
+		--eval "(dolist (language '(jinja gotmpl yaml toml)) (unless (treesit-ready-p language) (error \"The %s grammar is unavailable\" language)))"
 
 test-jinja2: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
@@ -79,7 +89,7 @@ test-treesit-fold: autoloads
 		-l poly-treesit-fold-test \
 		-f ert-run-tests-batch-and-exit
 
-test: test-jinja2 test-go-template test-treesit-fold
+test: check-grammars test-jinja2 test-go-template test-treesit-fold
 
 clean:
 	find . -name '*.elc' -delete
