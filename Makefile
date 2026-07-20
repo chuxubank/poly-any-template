@@ -3,19 +3,23 @@ BATCH = $(EMACS) -Q --batch
 JINJA2_TS_MODE_PATH ?= ../jinja2-ts-mode
 SHARED_DIR = lisp/shared
 JINJA2_DIR = lisp/jinja2
+ANSIBLE_DIR = lisp/ansible
 GO_TEMPLATE_DIR = lisp/go-template
 TREESIT_FOLD_DIR = lisp/treesit-fold
-LOAD_PATH = -L $(SHARED_DIR) -L $(JINJA2_DIR) -L $(GO_TEMPLATE_DIR) \
+LOAD_PATH = -L $(SHARED_DIR) -L $(JINJA2_DIR) -L $(ANSIBLE_DIR) \
+	-L $(GO_TEMPLATE_DIR) \
 	-L $(TREESIT_FOLD_DIR) -L test -L $(JINJA2_TS_MODE_PATH)
 GO_TEMPLATE_URL = https://github.com/chuxubank/go-template-ts-mode
 JINJA2_TS_MODE_URL = https://github.com/chuxubank/jinja2-ts-mode
 
 SOURCES = $(SHARED_DIR)/poly-any-template.el \
 	$(JINJA2_DIR)/poly-any-jinja2.el \
+	$(ANSIBLE_DIR)/poly-ansible-jinja2.el \
 	$(GO_TEMPLATE_DIR)/poly-any-go-template.el \
 	$(TREESIT_FOLD_DIR)/poly-treesit-fold.el
 AUTOLOADS = $(SHARED_DIR)/poly-any-template-autoloads.el \
 	$(JINJA2_DIR)/poly-any-jinja2-autoloads.el \
+	$(ANSIBLE_DIR)/poly-ansible-jinja2-autoloads.el \
 	$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el \
 	$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el
 
@@ -24,9 +28,9 @@ PACKAGE_SETUP = \
 	--eval "(package-initialize)" \
 	--eval "(setq load-prefer-newer t)" \
 	--eval "(when (file-directory-p \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\") (add-to-list 'treesit-extra-load-path \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\"))" \
-	--eval "(dolist (directory '(\"$(CURDIR)/$(SHARED_DIR)\" \"$(CURDIR)/$(JINJA2_DIR)\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)\")) (setq load-path (cons directory (delete directory load-path))))" \
+	--eval "(dolist (directory '(\"$(CURDIR)/$(SHARED_DIR)\" \"$(CURDIR)/$(JINJA2_DIR)\" \"$(CURDIR)/$(ANSIBLE_DIR)\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)\")) (setq load-path (cons directory (delete directory load-path))))" \
 	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))" \
-	--eval "(dolist (file '(\"$(CURDIR)/$(SHARED_DIR)/poly-any-template-autoloads.el\" \"$(CURDIR)/$(JINJA2_DIR)/poly-any-jinja2-autoloads.el\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el\")) (load file nil t))"
+	--eval "(dolist (file '(\"$(CURDIR)/$(SHARED_DIR)/poly-any-template-autoloads.el\" \"$(CURDIR)/$(JINJA2_DIR)/poly-any-jinja2-autoloads.el\" \"$(CURDIR)/$(ANSIBLE_DIR)/poly-ansible-jinja2-autoloads.el\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el\")) (load file nil t))"
 
 ARCHIVES = \
 	--eval "(require 'package)" \
@@ -35,7 +39,7 @@ ARCHIVES = \
 	--eval "(package-initialize)"
 
 .PHONY: all install-deps autoloads compile check-grammars test test-jinja2 \
-	test-go-template test-treesit-fold clean
+	test-ansible test-go-template test-treesit-fold clean
 
 all: compile test
 
@@ -45,6 +49,8 @@ install-deps:
 		--eval "(package-install 'polymode)" \
 		--eval "(package-install 'indent-bars)" \
 		--eval "(package-install 'treesit-fold)" \
+		--eval "(package-install 'ansible)" \
+		--eval "(package-install 'ansible-doc)" \
 		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))" \
 		--eval "(unless (package-installed-p 'jinja2-ts-mode) (package-vc-install \"$(JINJA2_TS_MODE_URL)\"))" \
 		--eval "(require 'jinja2-ts-mode)" \
@@ -60,6 +66,7 @@ autoloads:
 	$(BATCH) --eval "(require 'package)" \
 		--eval "(package-generate-autoloads 'poly-any-template \"$(SHARED_DIR)\")" \
 		--eval "(package-generate-autoloads 'poly-any-jinja2 \"$(JINJA2_DIR)\")" \
+		--eval "(package-generate-autoloads 'poly-ansible-jinja2 \"$(ANSIBLE_DIR)\")" \
 		--eval "(package-generate-autoloads 'poly-any-go-template \"$(GO_TEMPLATE_DIR)\")" \
 		--eval "(package-generate-autoloads 'poly-treesit-fold \"$(TREESIT_FOLD_DIR)\")"
 
@@ -78,6 +85,11 @@ test-jinja2: autoloads
 		-l poly-any-jinja2-test \
 		-f ert-run-tests-batch-and-exit
 
+test-ansible: autoloads
+	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
+		-l poly-ansible-jinja2-test \
+		-f ert-run-tests-batch-and-exit
+
 test-go-template: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l yaml-ts-mode \
@@ -89,7 +101,7 @@ test-treesit-fold: autoloads
 		-l poly-treesit-fold-test \
 		-f ert-run-tests-batch-and-exit
 
-test: check-grammars test-jinja2 test-go-template test-treesit-fold
+test: check-grammars test-jinja2 test-ansible test-go-template test-treesit-fold
 
 clean:
 	find . -name '*.elc' -delete

@@ -1,12 +1,13 @@
 # poly-any-template
 
-This repository contains three independently installable user-facing
-packages: `poly-any-jinja2`, `poly-any-go-template`, and
-`poly-treesit-fold`. It also contains the internal `poly-any-template` shared
-package required by the two template modes. Each package has its own
-`lisp-dir`, so installing multiple packages from this repository cannot
-expose duplicate copies of the shared implementation on `load-path`. The
-mode before the template suffix is inferred from the filename:
+This repository contains four independently installable user-facing
+packages: `poly-any-jinja2`, `poly-any-go-template`,
+`poly-ansible-jinja2`, and `poly-treesit-fold`. It also contains the internal
+`poly-any-template` shared package required by the template modes. Each
+package has its own `lisp-dir`, so installing multiple packages from this
+repository cannot expose duplicate copies of the shared implementation on
+`load-path`. The mode before the template suffix is inferred from the
+filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -36,6 +37,21 @@ suffix.
         "/\\(?:group\\|host\\)_vars/"))
 ```
 
+Install `poly-ansible-jinja2` to recognize the layouts from Ansible's
+[sample setup](https://docs.ansible.com/projects/ansible/latest/tips_tricks/sample_setup.html)
+without maintaining custom rules. It covers top-level and `playbooks/`
+playbooks, role tasks and metadata, inventory variables, Molecule scenarios,
+projects identified by their standard directories or configuration files,
+Jinja-suffixed files below `templates` directories, and suffixless templates
+inside roles or marked Ansible projects. Host modes are inferred after the
+Jinja2 suffix is removed, so `templates/nginx.conf.j2` uses `conf-mode` and
+`templates/Brewfile.j2` uses `ruby-mode`. A hostless template such as
+`templates/env.j2` uses `text-mode` as its host instead of falling back to the
+pure Jinja2 mode. Ansible YAML source files also enable `ansible-mode` and
+`ansible-doc-mode`; rendered files in `templates` do not. Customize
+`poly-ansible-jinja2-project-markers` when a project uses a different root
+marker or a global marker should be ignored.
+
 ## Installation
 
 ```elisp
@@ -56,6 +72,11 @@ suffix.
        :lisp-dir "lisp/jinja2")
   :demand t)
 
+(use-package poly-ansible-jinja2
+  :vc (poly-ansible-jinja2
+       :url "https://github.com/chuxubank/poly-any-template"
+       :lisp-dir "lisp/ansible"))
+
 (use-package poly-any-go-template
   :vc (poly-any-go-template
        :url "https://github.com/chuxubank/poly-any-template"
@@ -73,6 +94,8 @@ suffix.
 
 `poly-any-jinja2` requires Emacs 29.1+, `polymode`, and
 `jinja2-ts-mode` 0.1.1+.
+`poly-ansible-jinja2` additionally requires `ansible` and `ansible-doc`; it
+does not depend on the older `poly-ansible` package.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode` 0.1.4+.
 

@@ -1,7 +1,7 @@
 ;;; poly-any-jinja2.el --- Polymode for Jinja2 templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.10
+;; Version: 0.1.11
 ;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.8") (jinja2-ts-mode "0.1.1"))
 ;; Keywords: languages, polymode, templates, jinja2
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -19,6 +19,12 @@
   "Mode-line lighter used by Jinja2 polymodes.
 The value may be any valid mode-line construct, or nil to hide the lighter."
   :type 'sexp
+  :group 'poly-any-template)
+
+(defcustom poly-any-jinja2-hostless-mode #'jinja2-ts-mode
+  "Mode used when no Jinja2 host mode can be inferred.
+Set this to nil to use `text-mode' as a polymode host instead."
+  :type '(choice (const :tag "Text polymode host" nil) function)
   :group 'poly-any-template)
 
 (defcustom poly-any-jinja2-extra-file-name-rules nil
@@ -70,7 +76,7 @@ Return a zero-width match so the inner span includes the opening delimiter."
    (and buffer-file-name
         (string-match-p poly-any-jinja2--template-suffix-regexp
                         buffer-file-name))
-   #'jinja2-ts-mode))
+   poly-any-jinja2-hostless-mode))
 
 ;;;###autoload
 (add-to-list 'magic-mode-alist

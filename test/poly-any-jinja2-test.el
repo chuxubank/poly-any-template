@@ -41,6 +41,14 @@
       (should (eq major-mode 'jinja2-ts-mode))
       (should-not polymode-mode))))
 
+(ert-deftest poly-any-jinja2-supports-a-text-hostless-mode ()
+  (let ((poly-any-jinja2-hostless-mode nil))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/template.j2")
+      (normal-mode t)
+      (should (eq major-mode 'text-mode))
+      (should polymode-mode))))
+
 (ert-deftest poly-any-jinja2-uses-customizable-lighter ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/config.text.j2")
