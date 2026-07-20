@@ -1,7 +1,9 @@
 EMACS ?= emacs
 BATCH = $(EMACS) -Q --batch
-LOAD_PATH = -L . -L test
+JINJA2_TS_MODE_PATH ?= ../jinja2-ts-mode
+LOAD_PATH = -L . -L test -L $(JINJA2_TS_MODE_PATH)
 GO_TEMPLATE_URL = https://github.com/chuxubank/go-template-ts-mode
+JINJA2_TS_MODE_URL = https://github.com/chuxubank/jinja2-ts-mode
 
 SOURCES = poly-any-template.el poly-any-jinja2.el poly-any-go-template.el \
 	poly-treesit-fold.el
@@ -10,6 +12,7 @@ PACKAGE_SETUP = \
 	--eval "(require 'package)" \
 	--eval "(package-initialize)" \
 	--eval "(setq load-prefer-newer t)" \
+	--eval "(when (file-directory-p \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\") (add-to-list 'treesit-extra-load-path \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\"))" \
 	--eval "(setq load-path (cons \"$(CURDIR)\" (delete \"$(CURDIR)\" load-path)))" \
 	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))"
 
@@ -28,10 +31,12 @@ install-deps:
 	$(BATCH) $(ARCHIVES) \
 		--eval "(package-refresh-contents)" \
 		--eval "(package-install 'polymode)" \
-		--eval "(package-install 'jinja2-mode)" \
 		--eval "(package-install 'indent-bars)" \
 		--eval "(package-install 'treesit-fold)" \
-		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))"
+		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))" \
+		--eval "(unless (package-installed-p 'jinja2-ts-mode) (package-vc-install \"$(JINJA2_TS_MODE_URL)\"))" \
+		--eval "(require 'jinja2-ts-mode)" \
+		--eval "(unless (treesit-language-available-p 'jinja) (jinja2-ts-mode-install-grammar))"
 
 compile:
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \

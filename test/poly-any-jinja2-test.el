@@ -20,7 +20,7 @@
     (should polymode-mode)
     (should (cl-some
              (lambda (innermode)
-               (eq (eieio-oref innermode 'mode) 'jinja2-mode))
+               (eq (eieio-oref innermode 'mode) 'jinja2-ts-mode))
              (eieio-oref pm/polymode '-innermodes)))))
 
 (ert-deftest poly-any-jinja2-uses-customizable-lighter ()
@@ -33,10 +33,58 @@
       (let ((poly-any-jinja2-lighter " Jinja"))
         (should (equal (symbol-value lighter) " Jinja"))))))
 
-(ert-deftest poly-any-jinja2-registers-file-pattern ()
-  (should (member '("\\.\\(?:j2\\|jinja2\\)\\'"
-                   . poly-any-jinja2-mode)
-                  auto-mode-alist)))
+(ert-deftest poly-any-jinja2-registers-file-patterns-in-order ()
+  (let ((poly-entry
+         (cl-position '("\\.\\(?:j2\\|jinja\\|jinja2\\)\\'"
+                        . poly-any-jinja2-mode)
+                      auto-mode-alist :test #'equal))
+        (plain-entry
+         (cl-position '("\\.\\(?:j2\\|jinja\\|jinja2\\)\\'"
+                        . jinja2-ts-mode)
+                      auto-mode-alist :test #'equal)))
+    (should poly-entry)
+    (should plain-entry)
+    (should (< poly-entry plain-entry))))
+
+(ert-deftest poly-any-jinja2-span-includes-delimiters ()
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/config.text.j2")
+    (insert "name={{ render(value) }}")
+    (poly-any-jinja2-mode)
+    (goto-char (point-min))
+    (search-forward "render")
+    (let ((span (pm-innermost-span)))
+      (should (eq (car span) 'body))
+      (should (equal (buffer-substring-no-properties
+                      (nth 1 span) (nth 2 span))
+                     "{{ render(value) }}")))))
+
+(ert-deftest poly-any-jinja2-fontifies-inner-mode-on-first-pass ()
+  (skip-unless (treesit-ready-p 'jinja))
+  (let ((treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.text.j2")
+      (insert "{% if enabled %}{{ render(value) }}{% endif %}")
+      (poly-any-jinja2-mode)
+      (let ((poly-lock-allow-background-adjustment nil))
+        (pm-map-over-spans
+         (lambda (_span)
+           (setq font-lock-mode t)
+           (setq-local poly-lock-allow-fontification t)
+           (poly-lock-mode t)))
+        (font-lock-ensure))
+      (goto-char (point-min))
+      (search-forward "if")
+      (should (eq (get-text-property (1- (point)) 'face)
+                  'font-lock-keyword-face))
+      (search-forward "render")
+      (should (eq (get-text-property (1- (point)) 'face)
+                  'font-lock-function-call-face))
+      (search-forward "endif")
+      (should (eq (get-text-property (1- (point)) 'face)
+                  'font-lock-keyword-face))
+      (should-not
+       (text-property-search-forward 'face 'font-lock-warning-face t)))))
 
 (ert-deftest poly-any-jinja2-filters-only-artificial-blank-lines ()
   (let ((indent-bars-display-on-blank-lines t))

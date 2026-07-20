@@ -7,8 +7,9 @@ before the template suffix is inferred from the filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
-| `config.json.j2` | JSON | Jinja2 |
-| `values.yaml.jinja2` | YAML | Jinja2 |
+| `config.json.j2` | JSON | `jinja2-ts-mode` |
+| `values.yaml.jinja` | YAML | `jinja2-ts-mode` |
+| `values.yaml.jinja2` | YAML | `jinja2-ts-mode` |
 | `deployment.yaml.gotmpl` | YAML | `go-template-ts-mode` |
 | `page.html.gotmpl` | HTML | `go-template-ts-mode` |
 | `deployment.yaml.tmpl` | YAML | `go-template-ts-mode` |
@@ -20,6 +21,9 @@ directly.
 ## Installation
 
 ```elisp
+(use-package jinja2-ts-mode
+  :vc (:url "https://github.com/chuxubank/jinja2-ts-mode"))
+
 (use-package go-template-ts-mode
   :vc (:url "https://github.com/chuxubank/go-template-ts-mode"))
 
@@ -44,7 +48,7 @@ directly.
   (poly-treesit-fold-mode 1))
 ```
 
-`poly-any-jinja2` requires Emacs 29.1+, `polymode`, and `jinja2-mode`.
+`poly-any-jinja2` requires Emacs 29.1+, `polymode`, and `jinja2-ts-mode`.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode`.
 
