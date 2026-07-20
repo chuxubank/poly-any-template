@@ -38,21 +38,24 @@
                    . poly-any-jinja2-mode)
                   auto-mode-alist)))
 
-(ert-deftest poly-any-jinja2-does-not-invent-bars-for-inner-spans ()
+(ert-deftest poly-any-jinja2-filters-only-artificial-blank-lines ()
   (let ((indent-bars-display-on-blank-lines t))
     (with-temp-buffer
       (setq buffer-file-name "/tmp/config.json.j2")
       (insert "    {% if enabled %}\n"
+              "\n"
               "    {% endif %}\n")
       (poly-any-jinja2-mode)
-      (should (local-variable-p 'indent-bars-display-on-blank-lines))
-      (should-not indent-bars-display-on-blank-lines)
+      (should indent-bars-display-on-blank-lines)
       (let ((indent-bars-prefer-character t))
         (indent-bars-mode 1)
-        (indent-bars--draw-all-bars-between (point-min) (point-max)))
+        (poly-any-template--indent-bars-filter-blank-lines
+         #'indent-bars--display-blank-lines (point-min) (point-max)))
       (goto-char (point-min))
-      (should-not (get-text-property (line-end-position)
-                                     'indent-bars-display)))))
+      (let ((action-end (line-end-position 1))
+            (blank-end (line-end-position 2)))
+        (should-not (get-text-property action-end 'indent-bars-display))
+        (should (get-text-property blank-end 'indent-bars-display))))))
 
 (provide 'poly-any-jinja2-test)
 ;;; poly-any-jinja2-test.el ends here

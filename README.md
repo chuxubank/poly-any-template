@@ -52,10 +52,9 @@ Customize `poly-any-jinja2-lighter` and `poly-any-go-template-lighter` to
 change or hide their mode-line lighters. Both variables accept any mode-line
 construct.
 
-Template polymodes disable blank-line guides from `indent-bars` by default.
-Polymode presents inner spans as blank text while fontifying the host, which
-would otherwise produce trailing guides on template-action lines. Customize
-`poly-any-template-indent-bars-display-on-blank-lines` to restore them.
+Template polymodes preserve blank-line guides from `indent-bars`. Inner spans
+are filtered from the host's blank-line pass so template-action lines do not
+gain trailing guides, while real blank lines continue to display normally.
 
 `poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
 selects the parser belonging to the current polymode span and registers Go
