@@ -1,8 +1,8 @@
 ;;; poly-any-jinja2.el --- Polymode for Jinja2 templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.9
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.8") (jinja2-ts-mode "0.1.0"))
+;; Version: 0.1.10
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.8") (jinja2-ts-mode "0.1.1"))
 ;; Keywords: languages, polymode, templates, jinja2
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -69,7 +69,8 @@ Return a zero-width match so the inner span includes the opening delimiter."
    'poly-any-jinja2-lighter
    (and buffer-file-name
         (string-match-p poly-any-jinja2--template-suffix-regexp
-                        buffer-file-name))))
+                        buffer-file-name))
+   #'jinja2-ts-mode))
 
 ;;;###autoload
 (add-to-list 'magic-mode-alist

@@ -1,12 +1,12 @@
 # poly-any-template
 
-This repository contains three independently installable user packages:
-`poly-any-jinja2`, `poly-any-go-template`, and `poly-treesit-fold`. The two
-template modes depend on the internal `poly-any-template` shared package.
-Each package has its own `lisp-dir`, so installing multiple packages from this
-repository cannot expose duplicate copies of the shared implementation on
-`load-path`. The mode before the template suffix is inferred from the
-filename:
+This repository contains three independently installable user-facing
+packages: `poly-any-jinja2`, `poly-any-go-template`, and
+`poly-treesit-fold`. It also contains the internal `poly-any-template` shared
+package required by the two template modes. Each package has its own
+`lisp-dir`, so installing multiple packages from this repository cannot
+expose duplicate copies of the shared implementation on `load-path`. The
+mode before the template suffix is inferred from the filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -18,8 +18,10 @@ filename:
 | `deployment.yaml.tmpl` | YAML | `go-template-ts-mode` |
 | `page.html.tmpl` | HTML | `go-template-ts-mode` |
 
-Plain `.gotmpl` and `.tmpl` files continue to use `go-template-ts-mode`
-directly.
+Plain `.j2`, `.jinja`, and `.jinja2` files use `jinja2-ts-mode` directly.
+Plain `.gotmpl` and `.tmpl` files use `go-template-ts-mode` directly. A
+compound filename or a matching extra rule still activates Polymode with the
+inferred host mode.
 
 Customize `poly-any-jinja2-extra-file-name-rules` or
 `poly-any-go-template-extra-file-name-rules` for templates selected by path or
@@ -69,9 +71,10 @@ suffix.
   (poly-treesit-fold-mode 1))
 ```
 
-`poly-any-jinja2` requires Emacs 29.1+, `polymode`, and `jinja2-ts-mode`.
+`poly-any-jinja2` requires Emacs 29.1+, `polymode`, and
+`jinja2-ts-mode` 0.1.1+.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
-`go-template-ts-mode`.
+`go-template-ts-mode` 0.1.4+.
 
 Customize `poly-any-jinja2-lighter` and `poly-any-go-template-lighter` to
 change or hide their mode-line lighters. Both variables accept any mode-line

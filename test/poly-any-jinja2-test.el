@@ -25,6 +25,14 @@
                (eq (eieio-oref innermode 'mode) 'jinja2-ts-mode))
              (eieio-oref pm/polymode '-innermodes)))))
 
+(ert-deftest poly-any-jinja2-uses-pure-mode-without-a-host ()
+  (dolist (suffix '("j2" "jinja" "jinja2"))
+    (with-temp-buffer
+      (setq buffer-file-name (format "/tmp/template.%s" suffix))
+      (normal-mode t)
+      (should (eq major-mode 'jinja2-ts-mode))
+      (should-not polymode-mode))))
+
 (ert-deftest poly-any-jinja2-uses-customizable-lighter ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/config.text.j2")
