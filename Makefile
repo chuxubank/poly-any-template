@@ -14,6 +14,10 @@ SOURCES = $(SHARED_DIR)/poly-any-template.el \
 	$(JINJA2_DIR)/poly-any-jinja2.el \
 	$(GO_TEMPLATE_DIR)/poly-any-go-template.el \
 	$(TREESIT_FOLD_DIR)/poly-treesit-fold.el
+AUTOLOADS = $(SHARED_DIR)/poly-any-template-autoloads.el \
+	$(JINJA2_DIR)/poly-any-jinja2-autoloads.el \
+	$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el \
+	$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el
 
 PACKAGE_SETUP = \
 	--eval "(require 'package)" \
@@ -21,7 +25,8 @@ PACKAGE_SETUP = \
 	--eval "(setq load-prefer-newer t)" \
 	--eval "(when (file-directory-p \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\") (add-to-list 'treesit-extra-load-path \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\"))" \
 	--eval "(dolist (directory '(\"$(CURDIR)/$(SHARED_DIR)\" \"$(CURDIR)/$(JINJA2_DIR)\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)\")) (setq load-path (cons directory (delete directory load-path))))" \
-	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))"
+	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))" \
+	--eval "(dolist (file '(\"$(CURDIR)/$(SHARED_DIR)/poly-any-template-autoloads.el\" \"$(CURDIR)/$(JINJA2_DIR)/poly-any-jinja2-autoloads.el\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el\")) (load file nil t))"
 
 ARCHIVES = \
 	--eval "(require 'package)" \
@@ -29,7 +34,7 @@ ARCHIVES = \
 	--eval "(add-to-list 'package-archives '(\"jcs-elpa\" . \"https://jcs-emacs.github.io/jcs-elpa/packages/\") t)" \
 	--eval "(package-initialize)"
 
-.PHONY: all install-deps compile test test-jinja2 test-go-template \
+.PHONY: all install-deps autoloads compile test test-jinja2 test-go-template \
 	test-treesit-fold clean
 
 all: compile test
@@ -45,23 +50,31 @@ install-deps:
 		--eval "(require 'jinja2-ts-mode)" \
 		--eval "(unless (treesit-language-available-p 'jinja) (jinja2-ts-mode-install-grammar))"
 
-compile:
+autoloads:
+	rm -f $(AUTOLOADS)
+	$(BATCH) --eval "(require 'package)" \
+		--eval "(package-generate-autoloads 'poly-any-template \"$(SHARED_DIR)\")" \
+		--eval "(package-generate-autoloads 'poly-any-jinja2 \"$(JINJA2_DIR)\")" \
+		--eval "(package-generate-autoloads 'poly-any-go-template \"$(GO_TEMPLATE_DIR)\")" \
+		--eval "(package-generate-autoloads 'poly-treesit-fold \"$(TREESIT_FOLD_DIR)\")"
+
+compile: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		--eval "(setq byte-compile-error-on-warn t)" \
 		-f batch-byte-compile $(SOURCES)
 
-test-jinja2:
+test-jinja2: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l poly-any-jinja2-test \
 		-f ert-run-tests-batch-and-exit
 
-test-go-template:
+test-go-template: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l yaml-ts-mode \
 		-l poly-any-go-template-test \
 		-f ert-run-tests-batch-and-exit
 
-test-treesit-fold:
+test-treesit-fold: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l poly-treesit-fold-test \
 		-f ert-run-tests-batch-and-exit
@@ -70,3 +83,4 @@ test: test-jinja2 test-go-template test-treesit-fold
 
 clean:
 	find . -name '*.elc' -delete
+	rm -f $(AUTOLOADS)

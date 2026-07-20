@@ -8,7 +8,9 @@
 (require 'poly-any-jinja2)
 
 (ert-deftest poly-any-jinja2-detects-host-mode ()
-  (let ((auto-mode-alist '(("\\.host\\'" . text-mode))))
+  (let ((auto-mode-alist '(("\\.host\\'" . text-mode)))
+        (magic-mode-alist
+         '((poly-any-jinja2-test-undefined-predicate . fundamental-mode))))
     (should (eq (poly-any-template-host-mode-for-file
                  "/tmp/config.host")
                 'text-mode))))

@@ -1,8 +1,8 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.8
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.7") (go-template-ts-mode "0.1.2"))
+;; Version: 0.1.9
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.8") (go-template-ts-mode "0.1.2"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -34,6 +34,7 @@ function that accepts the file name and returns non-nil when it matches."
   "\\.\\(?:gotmpl\\|tmpl\\)\\'"
   "Regexp matching standard Go Template suffixes.")
 
+;;;###autoload
 (defun poly-any-go-template--extra-file-name-p ()
   "Return non-nil when the current file matches an extra Go Template rule."
   (poly-any-template--extra-file-name-p

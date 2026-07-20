@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.7
+;; Version: 0.1.8
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -105,9 +105,12 @@ apply `poly-any-template-host-filename-functions'."
   "Return the major mode selected for FILENAME."
   (when filename
     (ignore-errors
-      (let ((poly-any-template--inferring-host-mode t))
+      (let ((poly-any-template--inferring-host-mode t)
+            (magic-mode-alist nil)
+            (magic-fallback-mode-alist nil)
+            (interpreter-mode-alist nil))
         (with-temp-buffer
-          (set-visited-file-name filename t t)
+          (setq buffer-file-name filename)
           (when (set-auto-mode)
             (unless (eq major-mode 'fundamental-mode)
               major-mode)))))))
