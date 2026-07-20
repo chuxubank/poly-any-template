@@ -9,6 +9,7 @@ SOURCES = poly-any-template.el poly-any-jinja2.el poly-any-go-template.el \
 PACKAGE_SETUP = \
 	--eval "(require 'package)" \
 	--eval "(package-initialize)" \
+	--eval "(setq load-prefer-newer t)" \
 	--eval "(setq load-path (cons \"$(CURDIR)\" (delete \"$(CURDIR)\" load-path)))" \
 	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))"
 
@@ -28,6 +29,7 @@ install-deps:
 		--eval "(package-refresh-contents)" \
 		--eval "(package-install 'polymode)" \
 		--eval "(package-install 'jinja2-mode)" \
+		--eval "(package-install 'indent-bars)" \
 		--eval "(package-install 'treesit-fold)" \
 		--eval "(unless (package-installed-p 'go-template-ts-mode) (package-vc-install \"$(GO_TEMPLATE_URL)\"))"
 

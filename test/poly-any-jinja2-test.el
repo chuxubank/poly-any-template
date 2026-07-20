@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'indent-bars)
 (require 'poly-any-template)
 (require 'poly-any-jinja2)
 
@@ -36,6 +37,22 @@
   (should (member '("\\.\\(?:j2\\|jinja2\\)\\'"
                    . poly-any-jinja2-mode)
                   auto-mode-alist)))
+
+(ert-deftest poly-any-jinja2-does-not-invent-bars-for-inner-spans ()
+  (let ((indent-bars-display-on-blank-lines t))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.json.j2")
+      (insert "    {% if enabled %}\n"
+              "    {% endif %}\n")
+      (poly-any-jinja2-mode)
+      (should (local-variable-p 'indent-bars-display-on-blank-lines))
+      (should-not indent-bars-display-on-blank-lines)
+      (let ((indent-bars-prefer-character t))
+        (indent-bars-mode 1)
+        (indent-bars--draw-all-bars-between (point-min) (point-max)))
+      (goto-char (point-min))
+      (should-not (get-text-property (line-end-position)
+                                     'indent-bars-display)))))
 
 (provide 'poly-any-jinja2-test)
 ;;; poly-any-jinja2-test.el ends here

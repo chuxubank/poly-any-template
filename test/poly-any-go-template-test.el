@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'indent-bars)
 (require 'poly-any-template)
 (require 'poly-any-go-template)
 (require 'toml-ts-mode nil t)
@@ -59,6 +60,22 @@
       (setq buffer-file-name "/tmp/deployment.yaml.tmpl")
       (poly-any-go-template-mode))
     (should activated)))
+
+(ert-deftest poly-any-go-template-does-not-invent-bars-for-inner-spans ()
+  (let ((indent-bars-display-on-blank-lines t))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.json.tmpl")
+      (insert "    {{ if .enabled }}\n"
+              "    {{ end }}\n")
+      (poly-any-go-template-mode)
+      (should (local-variable-p 'indent-bars-display-on-blank-lines))
+      (should-not indent-bars-display-on-blank-lines)
+      (let ((indent-bars-prefer-character t))
+        (indent-bars-mode 1)
+        (indent-bars--draw-all-bars-between (point-min) (point-max)))
+      (goto-char (point-min))
+      (should-not (get-text-property (line-end-position)
+                                     'indent-bars-display)))))
 
 (ert-deftest poly-any-go-template-span-includes-delimiters ()
   (with-temp-buffer
