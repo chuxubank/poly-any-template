@@ -15,6 +15,14 @@
                  "/tmp/config.host")
                 'text-mode))))
 
+(ert-deftest poly-any-template-host-mode-ignores-set-auto-mode-return-value ()
+  (cl-letf (((symbol-function 'set-auto-mode)
+             (lambda (&rest _)
+               (text-mode)
+               nil)))
+    (should (eq (poly-any-template-host-mode-for-file "/tmp/config.host")
+                'text-mode))))
+
 (ert-deftest poly-any-jinja2-configures-inner-mode ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/config.text.j2")

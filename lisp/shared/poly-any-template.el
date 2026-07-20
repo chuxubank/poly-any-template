@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.8
+;; Version: 0.1.9
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -111,9 +111,9 @@ apply `poly-any-template-host-filename-functions'."
             (interpreter-mode-alist nil))
         (with-temp-buffer
           (setq buffer-file-name filename)
-          (when (set-auto-mode)
-            (unless (eq major-mode 'fundamental-mode)
-              major-mode)))))))
+          (set-auto-mode)
+          (unless (eq major-mode 'fundamental-mode)
+            major-mode))))))
 
 (defun poly-any-template--activate
     (dialect innermode lighter-variable remove-template-suffix
