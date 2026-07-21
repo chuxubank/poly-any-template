@@ -1,14 +1,22 @@
 # poly-any-template
 
-This repository contains five independently installable user-facing
-packages: `poly-any-jinja2`, `poly-any-go-template`,
-`poly-ansible-jinja2`, `poly-any-template-indent-bars`, and
-`poly-treesit-fold`. It also contains the internal
-`poly-any-template` shared package required by the template modes. Each
-package has its own `lisp-dir`, so installing multiple packages from this
-repository cannot expose duplicate copies of the shared implementation on
-`load-path`. The mode before the template suffix is inferred from the
-filename:
+This repository contains several independently installable packages in one
+VC repository. Each package has its own `lisp-dir`, so `package-vc` exposes
+only the requested package on `load-path`:
+
+| Package | `lisp-dir` | Purpose |
+| --- | --- | --- |
+| `poly-any-template` | `lisp/shared` | Shared host-mode inference and Polymode activation |
+| `poly-any-jinja2` | `lisp/jinja2` | Jinja2 templates in an inferred host mode |
+| `poly-any-go-template` | `lisp/go-template` | Go templates in an inferred host mode |
+| `poly-ansible-jinja2` | `lisp/ansible` | Ansible project and template conventions |
+| `poly-any-template-indent-bars` | `lisp/indent-bars` | Optional `indent-bars` integration |
+| `poly-treesit-fold` | `lisp/treesit-fold` | Optional `treesit-fold` integration |
+
+The template modes depend on the shared package. The integration packages
+are optional and are not referenced by the shared package or template modes.
+
+The mode before the template suffix is inferred from the filename:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -55,6 +63,10 @@ marker or a global marker should be ignored.
 
 ## Installation
 
+Install the shared package and whichever template modes you use. Explicit
+package names and `:lisp-dir` values are required because the repository
+contains multiple packages.
+
 ```elisp
 (use-package jinja2-ts-mode
   :vc (:url "https://github.com/chuxubank/jinja2-ts-mode"))
@@ -63,42 +75,46 @@ marker or a global marker should be ignored.
   :vc (:url "https://github.com/chuxubank/go-template-ts-mode"))
 
 (use-package poly-any-template
-  :vc (poly-any-template
-       :url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/chuxubank/poly-any-template"
        :lisp-dir "lisp/shared"))
 
 (use-package poly-any-jinja2
-  :vc (poly-any-jinja2
-       :url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/chuxubank/poly-any-template"
        :lisp-dir "lisp/jinja2")
   :demand t)
 
-(use-package poly-ansible-jinja2
-  :vc (poly-ansible-jinja2
-       :url "https://github.com/chuxubank/poly-any-template"
-       :lisp-dir "lisp/ansible"))
-
 (use-package poly-any-go-template
-  :vc (poly-any-go-template
-       :url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/chuxubank/poly-any-template"
        :lisp-dir "lisp/go-template")
   :demand t)
+```
+
+The Ansible, indentation, and folding integrations are independent and may
+be installed separately:
+
+```elisp
+(use-package poly-ansible-jinja2
+  :vc (:url "https://github.com/chuxubank/poly-any-template"
+       :lisp-dir "lisp/ansible"))
 
 (use-package poly-any-template-indent-bars
-  :vc (poly-any-template-indent-bars
-       :url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/chuxubank/poly-any-template"
        :lisp-dir "lisp/indent-bars")
   :hook
   (poly-any-template-after-activate . poly-any-template-indent-bars-mode))
 
 (use-package poly-treesit-fold
-  :vc (poly-treesit-fold
-       :url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/chuxubank/poly-any-template"
        :lisp-dir "lisp/treesit-fold")
   :demand t
   :config
   (poly-treesit-fold-mode 1))
 ```
+
+The `indent-bars` adapter is loaded lazily by
+`poly-any-template-after-activate-hook`; it does not need `:demand t`.
+`poly-treesit-fold-mode` is global, so the example deliberately uses
+`:demand t` to install its parser-selection advice during startup.
 
 `poly-any-jinja2` requires Emacs 29.1+, `polymode`, and
 `jinja2-ts-mode` 0.1.1+.
@@ -125,6 +141,20 @@ continue to display normally.
 selects the parser belonging to the current polymode span. Fold ranges remain
 owned by their language modes; `go-template-ts-mode` and `jinja2-ts-mode`
 provide their integrations automatically when `treesit-fold` is loaded.
+
+## Development
+
+Install the development dependencies once, then build and run all package
+tests through the Makefile:
+
+```sh
+make install-deps
+make
+```
+
+Individual suites are available as `make test-jinja2`, `make test-ansible`,
+`make test-go-template`, `make test-indent-bars`, and
+`make test-treesit-fold`.
 
 ## License
 
