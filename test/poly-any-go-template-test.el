@@ -214,6 +214,30 @@
       (should (eq (get-text-property (1- (point)) 'face)
                   'font-lock-keyword-face)))))
 
+(ert-deftest poly-any-go-template-fontifies-on-first-activation ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        (font-lock-global-modes t)
+        (global-font-lock-mode t)
+        (poly-lock-allow-background-adjustment nil)
+        (treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/script.sh.tmpl")
+      (insert "echo before\n"
+              "{{ $agents := . }}\n")
+      (poly-any-go-template-mode)
+      (dotimes (_ 3)
+        (font-lock-flush)
+        (font-lock-ensure))
+      (goto-char (point-min))
+      (search-forward "$agents")
+      (should (bound-and-true-p poly-lock-mode))
+      (with-current-buffer
+          (pm-span-buffer (pm-innermost-span (1- (point))))
+        (should (bound-and-true-p poly-lock-mode)))
+      (should (eq (get-char-property (1- (point)) 'face)
+                  'font-lock-variable-use-face)))))
+
 (ert-deftest poly-any-go-template-preserves-host-strings-across-inner-spans ()
   (skip-unless (treesit-ready-p 'gotmpl))
   (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))

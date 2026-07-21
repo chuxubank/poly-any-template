@@ -84,6 +84,30 @@
       (should polymode-mode)
       (should (= poly-any-template-test-host-hook-count 1)))))
 
+(ert-deftest poly-any-jinja2-fontifies-on-first-activation ()
+  (skip-unless (treesit-ready-p 'jinja))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        (font-lock-global-modes t)
+        (global-font-lock-mode t)
+        (poly-lock-allow-background-adjustment nil)
+        (treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/script.sh.j2")
+      (insert "echo before\n"
+              "{{ value }}\n")
+      (poly-any-jinja2-mode)
+      (dotimes (_ 3)
+        (font-lock-flush)
+        (font-lock-ensure))
+      (goto-char (point-min))
+      (search-forward "value")
+      (should (bound-and-true-p poly-lock-mode))
+      (with-current-buffer
+          (pm-span-buffer (pm-innermost-span (1- (point))))
+        (should (bound-and-true-p poly-lock-mode)))
+      (should (eq (get-char-property (1- (point)) 'face)
+                  'font-lock-variable-use-face)))))
+
 (ert-deftest poly-any-template-defers-named-host-selector ()
   (let ((auto-mode-alist
          '(("\\.selected\\'" . poly-any-template-test-host-selector)))

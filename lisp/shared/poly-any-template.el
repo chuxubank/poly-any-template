@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.12
+;; Version: 0.1.13
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -36,6 +36,9 @@ when present."
 
 (defvar-local poly-any-template--indent-bars-blank-line-function nil
   "Original indent-bars blank-line display function for this buffer.")
+
+(defvar-local poly-any-template--poly-lock-requested nil
+  "Non-nil when this polymode buffer should initialize Poly-lock.")
 
 (defun poly-any-template--indent-bars-filter-blank-lines
     (function beg end &rest args)
@@ -190,6 +193,44 @@ CASE-INSENSITIVE-P describes the filesystem of the original template file."
                (not (eq remapped 'fundamental-mode)))
       remapped)))
 
+(defun poly-any-template--global-font-lock-enabled-p ()
+  "Return non-nil when Global Font Lock covers the current major mode."
+  (and (bound-and-true-p global-font-lock-mode)
+       (cond
+        ((eq font-lock-global-modes t))
+        ((eq (car-safe font-lock-global-modes) 'not)
+         (not (memq major-mode (cdr font-lock-global-modes))))
+        ((memq major-mode font-lock-global-modes)))))
+
+(defun poly-any-template--enable-poly-lock-in-current-buffer ()
+  "Enable Poly-lock fontification in the current polymode buffer."
+  (setq font-lock-mode t)
+  (setq-local poly-lock-allow-fontification t)
+  (poly-lock-mode t))
+
+(defun poly-any-template--initialize-poly-lock (_type)
+  "Initialize Poly-lock in an inner buffer when its base buffer requests it."
+  (when-let ((base-buffer (buffer-base-buffer)))
+    (when (buffer-local-value
+           'poly-any-template--poly-lock-requested base-buffer)
+      (poly-any-template--enable-poly-lock-in-current-buffer))))
+
+(defun poly-any-template--enable-poly-lock (font-lock-enabled)
+  "Enable Poly-lock when FONT-LOCK-ENABLED or Global Font Lock requests it."
+  (dolist (innermode (eieio-oref pm/polymode '-innermodes))
+    (object-add-to-list
+     innermode 'init-functions #'poly-any-template--initialize-poly-lock))
+  (when (or font-lock-enabled
+            (poly-any-template--global-font-lock-enabled-p))
+    (let ((base-buffer (current-buffer)))
+      (setq-local poly-any-template--poly-lock-requested t)
+      (dolist (buffer (eieio-oref pm/polymode '-buffers))
+        (when (buffer-live-p buffer)
+          (with-current-buffer buffer
+            (poly-any-template--enable-poly-lock-in-current-buffer))))
+      (with-current-buffer base-buffer
+        (font-lock-flush)))))
+
 ;;;###autoload
 (defun poly-any-template-host-mode-for-file (filename)
   "Return the named mode function selected for FILENAME.
@@ -214,6 +255,7 @@ use `text-mode' as the polymode host."
     (if (and (not host-major-mode) hostless-mode)
         (funcall hostless-mode)
       (let* ((host-major-mode (or host-major-mode 'text-mode))
+             (font-lock-enabled font-lock-mode)
              (host-mode-symbol
               (intern (format "poly-%s-%s-hostmode"
                               host-major-mode dialect)))
@@ -232,6 +274,7 @@ use `text-mode' as the polymode host."
                    :innermodes '(,innermode)
                    :lighter ',lighter-variable) t))
         (funcall polymode-symbol)
+        (poly-any-template--enable-poly-lock font-lock-enabled)
         (poly-any-template--configure-indent-bars)
         (when (and (bound-and-true-p indent-bars-mode)
                    (fboundp 'jit-lock-refontify))
