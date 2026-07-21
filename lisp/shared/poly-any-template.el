@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.15
+;; Version: 0.1.17
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -237,6 +237,17 @@ fontification after the initial Poly-lock setup."
              (throw 'active t)))
          nil)))
 
+(defun poly-any-template--keep-inner-font-lock-enabled ()
+  "Keep language fontification enabled in a polymode inner buffer.
+Indent-bars can normally skip the language fontifier when only indentation
+guides need updating.  Polymode fontifies the host first, however, and that
+pass can clear face properties shared with inner buffers.  An inner span must
+therefore always restore its language faces when Poly-lock visits it."
+  (when (and poly-any-template--font-lock-managed-p
+             (buffer-base-buffer)
+             (boundp 'indent-bars--font-lock-inhibit))
+    (setq-local indent-bars--font-lock-inhibit nil)))
+
 (defun poly-any-template--poly-lock-flush (&optional beg end)
   "Flush Poly-lock from BEG to END while updating indent-bars state."
   (let ((beg (or beg (point-min)))
@@ -249,6 +260,12 @@ fontification after the initial Poly-lock setup."
 (defun poly-any-template--enable-poly-lock-in-current-buffer ()
   "Enable Poly-lock fontification in the current polymode buffer."
   (setq-local poly-any-template--font-lock-managed-p t)
+  (when (buffer-base-buffer)
+    (add-hook 'indent-bars-mode-hook
+              #'poly-any-template--keep-inner-font-lock-enabled t t)
+    (add-hook 'font-lock-mode-hook
+              #'poly-any-template--keep-inner-font-lock-enabled t t)
+    (poly-any-template--keep-inner-font-lock-enabled))
   (setq font-lock-mode t)
   (setq-local poly-lock-allow-fontification t)
   (poly-lock-mode t)

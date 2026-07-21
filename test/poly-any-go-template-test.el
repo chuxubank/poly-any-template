@@ -4,6 +4,7 @@
 
 (require 'ert)
 (require 'indent-bars)
+(require 'indent-bars-ts)
 (require 'poly-any-template)
 (require 'poly-any-go-template)
 (require 'toml-ts-mode nil t)
@@ -321,6 +322,54 @@
       (dolist (keyword '("if" "end"))
         (search-forward keyword)
         (should (eq (get-char-property (1- (point)) 'face)
+                    'font-lock-keyword-face))))))
+
+(ert-deftest poly-any-go-template-survives-indent-bars-only-refontification ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        (font-lock-global-modes t)
+        (global-font-lock-mode t)
+        (indent-bars-prefer-character t)
+        (indent-bars-treesit-support t)
+        (poly-lock-allow-background-adjustment nil)
+        (treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/script.sh.tmpl")
+      (insert "echo before\n"
+              "{{ if .enabled }}\n"
+              "echo after\n")
+      (poly-any-go-template-mode)
+      (font-lock-flush)
+      (font-lock-ensure)
+      (goto-char (point-min))
+      (search-forward "if")
+      (let* ((keyword-position (1- (point)))
+             (span (pm-innermost-span keyword-position))
+             (span-buffer (pm-span-buffer span))
+             (span-beg (nth 1 span))
+             (span-end (nth 2 span)))
+        (should (eq (get-char-property keyword-position 'face)
+                    'font-lock-keyword-face))
+        (with-current-buffer span-buffer
+          (indent-bars-mode 1)
+          ;; Batch Emacs does not activate the Tree-sitter optimization that
+          ;; is enabled in the graphical session, so reproduce its wrappers.
+          (setq-local indent-bars--orig-fontify-region
+                      #'font-lock-default-fontify-region
+                      font-lock-fontify-region-function
+                      #'indent-bars--fontify
+                      indent-bars--font-lock-inhibit
+                      #'indent-bars-ts--font-lock-inhibit
+                      indent-bars--regexp "\\`a\\'")
+          (run-hooks 'indent-bars-mode-hook)
+          (should indent-bars-mode))
+        ;; Poly-lock runs the host first, which clears shared inner faces.  The
+        ;; inner pass must restore them even for an indent-bars-only update.
+        (font-lock-default-unfontify-region span-beg span-end)
+        (should-not (get-char-property keyword-position 'face))
+        (with-current-buffer span-buffer
+          (jit-lock--run-functions span-beg span-end))
+        (should (eq (get-char-property keyword-position 'face)
                     'font-lock-keyword-face))))))
 
 (ert-deftest poly-any-go-template-preserves-host-strings-across-inner-spans ()
