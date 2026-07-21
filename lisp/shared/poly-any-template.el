@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.11
+;; Version: 0.1.12
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -224,8 +224,7 @@ use `text-mode' as the polymode host."
                               dialect))))
         (unless (fboundp host-mode-symbol)
           (eval `(define-hostmode ,host-mode-symbol
-                   :mode ',host-major-mode
-                   :protect-font-lock t)
+                   :mode ',host-major-mode)
                 t))
         (unless (fboundp polymode-symbol)
           (eval `(define-polymode ,polymode-symbol

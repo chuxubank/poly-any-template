@@ -214,6 +214,31 @@
       (should (eq (get-text-property (1- (point)) 'face)
                   'font-lock-keyword-face)))))
 
+(ert-deftest poly-any-go-template-preserves-host-strings-across-inner-spans ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        (treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/script.sh.tmpl")
+      (insert "if true; then\n"
+              "  echo \"{{ .value }}\"\n"
+              "else\n"
+              "  echo fallback\n"
+              "fi\n")
+      (poly-any-go-template-mode)
+      (let ((poly-lock-allow-background-adjustment nil))
+        (pm-map-over-spans
+         (lambda (_span)
+           (setq font-lock-mode t)
+           (setq-local poly-lock-allow-fontification t)
+           (poly-lock-mode t)))
+        (font-lock-ensure))
+      (goto-char (point-min))
+      (forward-line 2)
+      (back-to-indentation)
+      (should (eq (get-char-property (point) 'face)
+                  'font-lock-keyword-face)))))
+
 (ert-deftest poly-any-go-template-protects-host-font-lock-from-inner-spans ()
   (skip-unless (and (fboundp 'toml-ts-mode) (treesit-ready-p 'toml)
                     (treesit-ready-p 'gotmpl)))
