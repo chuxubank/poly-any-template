@@ -1,8 +1,8 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.15
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.14") (go-template-ts-mode "0.1.7"))
+;; Version: 0.1.16
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.15") (go-template-ts-mode "0.1.7"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
 

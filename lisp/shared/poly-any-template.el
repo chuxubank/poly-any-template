@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.14
+;; Version: 0.1.15
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -39,6 +39,9 @@ when present."
 
 (defvar-local poly-any-template--poly-lock-requested nil
   "Non-nil when this polymode buffer should initialize Poly-lock.")
+
+(defvar-local poly-any-template--font-lock-managed-p nil
+  "Non-nil when Font Lock is managed by a poly-any template mode.")
 
 (defun poly-any-template--indent-bars-filter-blank-lines
     (function beg end &rest args)
@@ -202,11 +205,57 @@ CASE-INSENSITIVE-P describes the filesystem of the original template file."
          (not (memq major-mode (cdr font-lock-global-modes))))
         ((memq major-mode font-lock-global-modes)))))
 
+(defun poly-any-template--font-lock-mode (function &rest args)
+  "Call FUNCTION with ARGS without Font Lock rejecting a hidden buffer.
+Emacs refuses to enable Font Lock in buffers whose names start with a space.
+Polymode uses such buffers internally even while displaying them, so a later
+call from Global Font Lock or another minor mode would otherwise disable
+fontification after the initial Poly-lock setup."
+  (if (and poly-any-template--font-lock-managed-p
+           (string-prefix-p " " (buffer-name)))
+      (let ((original-name (buffer-name))
+            (temporary-name
+             (generate-new-buffer-name
+              (format "*%s font-lock*"
+                      (string-trim-left (buffer-name))))))
+        (unwind-protect
+            (progn
+              (rename-buffer temporary-name)
+              (apply function args))
+          (when (buffer-live-p (current-buffer))
+            (rename-buffer original-name))))
+    (apply function args)))
+
+(defun poly-any-template--indent-bars-font-lock-active-p ()
+  "Return non-nil when an owned buffer uses indent-bars Tree-sitter lock."
+  (and (boundp 'indent-bars--font-lock-inhibit)
+       (catch 'active
+         (dolist (buffer (eieio-oref pm/polymode '-buffers))
+           (when (and (buffer-live-p buffer)
+                      (buffer-local-value
+                       'indent-bars--font-lock-inhibit buffer))
+             (throw 'active t)))
+         nil)))
+
+(defun poly-any-template--poly-lock-flush (&optional beg end)
+  "Flush Poly-lock from BEG to END while updating indent-bars state."
+  (let ((beg (or beg (point-min)))
+        (end (or end (point-max))))
+    (when (poly-any-template--indent-bars-font-lock-active-p)
+      (with-silent-modifications
+        (put-text-property beg end 'indent-bars-font-lock-pending t)))
+    (poly-lock-flush beg end)))
+
 (defun poly-any-template--enable-poly-lock-in-current-buffer ()
   "Enable Poly-lock fontification in the current polymode buffer."
+  (setq-local poly-any-template--font-lock-managed-p t)
   (setq font-lock-mode t)
   (setq-local poly-lock-allow-fontification t)
-  (poly-lock-mode t))
+  (poly-lock-mode t)
+  (setq-local font-lock-flush-function
+              #'poly-any-template--poly-lock-flush
+              font-lock-fontify-buffer-function
+              #'poly-any-template--poly-lock-flush))
 
 (defun poly-any-template--disable-poly-lock-in-current-buffer ()
   "Disable Poly-lock fontification in the current polymode buffer."
@@ -297,6 +346,9 @@ use `text-mode' as the polymode host."
                    (fboundp 'jit-lock-refontify))
           (funcall 'jit-lock-refontify))
         (run-hooks 'poly-any-template-after-activate-hook)))))
+
+(unless (advice-member-p #'poly-any-template--font-lock-mode 'font-lock-mode)
+  (advice-add 'font-lock-mode :around #'poly-any-template--font-lock-mode))
 
 (provide 'poly-any-template)
 ;;; poly-any-template.el ends here

@@ -282,6 +282,47 @@
         (should (eq (get-char-property (1- (point)) 'face)
                     'font-lock-keyword-face))))))
 
+(ert-deftest poly-any-go-template-survives-hidden-buffer-font-lock-restart ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        (font-lock-global-modes t)
+        (global-font-lock-mode t)
+        (indent-bars-prefer-character t)
+        (indent-bars-treesit-support t)
+        (poly-lock-allow-background-adjustment nil)
+        (treesit-font-lock-level 4))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/script.sh.tmpl")
+      (insert "{{ if .enabled }}\n"
+              "{{ end }}\n")
+      (poly-any-go-template-mode)
+      (pm-map-over-spans
+       (lambda (_span)
+         (when (eq major-mode 'go-template-ts-mode)
+           (indent-bars-mode 1)
+           (run-hooks 'font-lock-mode-hook))))
+      (font-lock-ensure)
+      (with-silent-modifications
+        (remove-text-properties
+         (point-min) (point-max) '(indent-bars-font-lock-pending nil)))
+      (let ((noninteractive nil))
+        (font-lock-mode -1)
+        (should-not font-lock-mode)
+        (font-lock-mode 1))
+      (should font-lock-mode)
+      (should (bound-and-true-p poly-lock-mode))
+      (with-silent-modifications
+        (remove-text-properties
+         (point-min) (point-max)
+         '(face nil indent-bars-font-lock-pending nil)))
+      (font-lock-flush)
+      (font-lock-ensure)
+      (goto-char (point-min))
+      (dolist (keyword '("if" "end"))
+        (search-forward keyword)
+        (should (eq (get-char-property (1- (point)) 'face)
+                    'font-lock-keyword-face))))))
+
 (ert-deftest poly-any-go-template-preserves-host-strings-across-inner-spans ()
   (skip-unless (treesit-ready-p 'gotmpl))
   (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
