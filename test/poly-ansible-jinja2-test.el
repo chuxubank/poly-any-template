@@ -1,4 +1,4 @@
-;;; poly-ansible-jinja2-test.el --- Tests for poly-ansible-jinja2 -*- lexical-binding: t; -*-
+;;; poly-ansible-jinja2-test.el --- Tests for poly-ansible-jinja2 -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;;; Code:
 

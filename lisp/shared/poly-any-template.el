@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.18
+;; Version: 0.1.19
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template

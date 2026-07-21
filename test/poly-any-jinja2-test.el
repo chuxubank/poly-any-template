@@ -1,4 +1,4 @@
-;;; poly-any-jinja2-test.el --- Tests for poly-any-jinja2 -*- lexical-binding: t; -*-
+;;; poly-any-jinja2-test.el --- Tests for poly-any-jinja2 -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;;; Code:
 

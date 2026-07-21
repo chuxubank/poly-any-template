@@ -1,4 +1,4 @@
-;;; poly-any-go-template-test.el --- Tests for poly-any-go-template -*- lexical-binding: t; -*-
+;;; poly-any-go-template-test.el --- Tests for poly-any-go-template -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;;; Code:
 

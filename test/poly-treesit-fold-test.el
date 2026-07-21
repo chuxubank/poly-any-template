@@ -1,4 +1,4 @@
-;;; poly-treesit-fold-test.el --- Tests for poly-treesit-fold -*- lexical-binding: t; -*-
+;;; poly-treesit-fold-test.el --- Tests for poly-treesit-fold -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;;; Code:
 

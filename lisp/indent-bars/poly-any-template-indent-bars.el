@@ -1,8 +1,8 @@
 ;;; poly-any-template-indent-bars.el --- indent-bars for template polymodes -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.18
-;; Package-Requires: ((emacs "29.1") (indent-bars "0") (poly-any-template "0.1.18"))
+;; Version: 0.1.19
+;; Package-Requires: ((emacs "29.1") (indent-bars "0") (poly-any-template "0.1.19"))
 ;; Keywords: convenience, languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
 

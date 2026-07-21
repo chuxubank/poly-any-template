@@ -1,4 +1,4 @@
-;;; poly-any-template-indent-bars-test.el --- indent-bars adapter tests -*- lexical-binding: t; -*-
+;;; poly-any-template-indent-bars-test.el --- indent-bars adapter tests -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;;; Code:
 
