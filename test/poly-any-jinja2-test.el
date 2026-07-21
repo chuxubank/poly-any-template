@@ -3,7 +3,6 @@
 ;;; Code:
 
 (require 'ert)
-(require 'indent-bars)
 (require 'poly-any-template)
 (require 'poly-any-jinja2)
 
@@ -270,37 +269,6 @@
                   'font-lock-keyword-face))
       (should-not
        (text-property-search-forward 'face 'font-lock-warning-face t)))))
-
-(ert-deftest poly-any-jinja2-filters-only-artificial-blank-lines ()
-  (let ((indent-bars-display-on-blank-lines t))
-    (with-temp-buffer
-      (setq buffer-file-name "/tmp/config.json.j2")
-      (insert "        {% if enabled %}\n"
-              "\n"
-              "        {% endif %}\n")
-      (poly-any-jinja2-mode)
-      (should indent-bars-display-on-blank-lines)
-      (should (eq indent-bars--display-blank-lines-function
-                  #'poly-any-template--indent-bars-display-blank-lines))
-      (let ((indent-bars-prefer-character t)
-            (original-function
-             poly-any-template--indent-bars-blank-line-function)
-            calls)
-        (indent-bars-mode 1)
-        (let ((poly-any-template--indent-bars-blank-line-function
-               (lambda (beg end &rest args)
-                 (push (cons beg end) calls)
-                 (apply original-function beg end args))))
-          (funcall indent-bars--display-blank-lines-function
-                   (point-min) (point-max)))
-        (goto-char (point-min))
-        (let ((blank-beg (line-beginning-position 2)))
-          (should (equal calls (list (cons blank-beg (1+ blank-beg)))))))
-      (goto-char (point-min))
-      (let ((action-end (line-end-position 1))
-            (blank-end (line-end-position 2)))
-        (should-not (get-text-property action-end 'indent-bars-display))
-        (should (get-text-property blank-end 'indent-bars-display))))))
 
 (provide 'poly-any-jinja2-test)
 ;;; poly-any-jinja2-test.el ends here

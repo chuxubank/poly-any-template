@@ -3,8 +3,6 @@
 ;;; Code:
 
 (require 'ert)
-(require 'indent-bars)
-(require 'indent-bars-ts)
 (require 'poly-any-template)
 (require 'poly-any-go-template)
 (require 'toml-ts-mode nil t)
@@ -96,37 +94,6 @@
       (setq buffer-file-name "/tmp/deployment.yaml.tmpl")
       (poly-any-go-template-mode))
     (should activated)))
-
-(ert-deftest poly-any-go-template-filters-only-artificial-blank-lines ()
-  (let ((indent-bars-display-on-blank-lines t))
-    (with-temp-buffer
-      (setq buffer-file-name "/tmp/config.json.tmpl")
-      (insert "        {{ if .enabled }}\n"
-              "\n"
-              "        {{ end }}\n")
-      (poly-any-go-template-mode)
-      (should indent-bars-display-on-blank-lines)
-      (should (eq indent-bars--display-blank-lines-function
-                  #'poly-any-template--indent-bars-display-blank-lines))
-      (let ((indent-bars-prefer-character t)
-            (original-function
-             poly-any-template--indent-bars-blank-line-function)
-            calls)
-        (indent-bars-mode 1)
-        (let ((poly-any-template--indent-bars-blank-line-function
-               (lambda (beg end &rest args)
-                 (push (cons beg end) calls)
-                 (apply original-function beg end args))))
-          (funcall indent-bars--display-blank-lines-function
-                   (point-min) (point-max)))
-        (goto-char (point-min))
-        (let ((blank-beg (line-beginning-position 2)))
-          (should (equal calls (list (cons blank-beg (1+ blank-beg)))))))
-      (goto-char (point-min))
-      (let ((action-end (line-end-position 1))
-            (blank-end (line-end-position 2)))
-        (should-not (get-text-property action-end 'indent-bars-display))
-        (should (get-text-property blank-end 'indent-bars-display))))))
 
 (ert-deftest poly-any-go-template-span-includes-delimiters ()
   (with-temp-buffer
@@ -288,8 +255,6 @@
   (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
         (font-lock-global-modes t)
         (global-font-lock-mode t)
-        (indent-bars-prefer-character t)
-        (indent-bars-treesit-support t)
         (poly-lock-allow-background-adjustment nil)
         (treesit-font-lock-level 4))
     (with-temp-buffer
@@ -297,15 +262,7 @@
       (insert "{{ if .enabled }}\n"
               "{{ end }}\n")
       (poly-any-go-template-mode)
-      (pm-map-over-spans
-       (lambda (_span)
-         (when (eq major-mode 'go-template-ts-mode)
-           (indent-bars-mode 1)
-           (run-hooks 'font-lock-mode-hook))))
       (font-lock-ensure)
-      (with-silent-modifications
-        (remove-text-properties
-         (point-min) (point-max) '(indent-bars-font-lock-pending nil)))
       (let ((noninteractive nil))
         (font-lock-mode -1)
         (should-not font-lock-mode)
@@ -314,62 +271,13 @@
       (should (bound-and-true-p poly-lock-mode))
       (with-silent-modifications
         (remove-text-properties
-         (point-min) (point-max)
-         '(face nil indent-bars-font-lock-pending nil)))
+         (point-min) (point-max) '(face nil)))
       (font-lock-flush)
       (font-lock-ensure)
       (goto-char (point-min))
       (dolist (keyword '("if" "end"))
         (search-forward keyword)
         (should (eq (get-char-property (1- (point)) 'face)
-                    'font-lock-keyword-face))))))
-
-(ert-deftest poly-any-go-template-survives-indent-bars-only-refontification ()
-  (skip-unless (treesit-ready-p 'gotmpl))
-  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
-        (font-lock-global-modes t)
-        (global-font-lock-mode t)
-        (indent-bars-prefer-character t)
-        (indent-bars-treesit-support t)
-        (poly-lock-allow-background-adjustment nil)
-        (treesit-font-lock-level 4))
-    (with-temp-buffer
-      (setq buffer-file-name "/tmp/script.sh.tmpl")
-      (insert "echo before\n"
-              "{{ if .enabled }}\n"
-              "echo after\n")
-      (poly-any-go-template-mode)
-      (font-lock-flush)
-      (font-lock-ensure)
-      (goto-char (point-min))
-      (search-forward "if")
-      (let* ((keyword-position (1- (point)))
-             (span (pm-innermost-span keyword-position))
-             (span-buffer (pm-span-buffer span))
-             (span-beg (nth 1 span))
-             (span-end (nth 2 span)))
-        (should (eq (get-char-property keyword-position 'face)
-                    'font-lock-keyword-face))
-        (with-current-buffer span-buffer
-          (indent-bars-mode 1)
-          ;; Batch Emacs does not activate the Tree-sitter optimization that
-          ;; is enabled in the graphical session, so reproduce its wrappers.
-          (setq-local indent-bars--orig-fontify-region
-                      #'font-lock-default-fontify-region
-                      font-lock-fontify-region-function
-                      #'indent-bars--fontify
-                      indent-bars--font-lock-inhibit
-                      #'indent-bars-ts--font-lock-inhibit
-                      indent-bars--regexp "\\`a\\'")
-          (run-hooks 'indent-bars-mode-hook)
-          (should indent-bars-mode))
-        ;; Poly-lock runs the host first, which clears shared inner faces.  The
-        ;; inner pass must restore them even for an indent-bars-only update.
-        (font-lock-default-unfontify-region span-beg span-end)
-        (should-not (get-char-property keyword-position 'face))
-        (with-current-buffer span-buffer
-          (jit-lock--run-functions span-beg span-end))
-        (should (eq (get-char-property keyword-position 'face)
                     'font-lock-keyword-face))))))
 
 (ert-deftest poly-any-go-template-preserves-host-strings-across-inner-spans ()

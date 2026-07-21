@@ -1,8 +1,9 @@
 # poly-any-template
 
-This repository contains four independently installable user-facing
+This repository contains five independently installable user-facing
 packages: `poly-any-jinja2`, `poly-any-go-template`,
-`poly-ansible-jinja2`, and `poly-treesit-fold`. It also contains the internal
+`poly-ansible-jinja2`, `poly-any-template-indent-bars`, and
+`poly-treesit-fold`. It also contains the internal
 `poly-any-template` shared package required by the template modes. Each
 package has its own `lisp-dir`, so installing multiple packages from this
 repository cannot expose duplicate copies of the shared implementation on
@@ -83,6 +84,13 @@ marker or a global marker should be ignored.
        :lisp-dir "lisp/go-template")
   :demand t)
 
+(use-package poly-any-template-indent-bars
+  :vc (poly-any-template-indent-bars
+       :url "https://github.com/chuxubank/poly-any-template"
+       :lisp-dir "lisp/indent-bars")
+  :hook
+  (poly-any-template-after-activate . poly-any-template-indent-bars-mode))
+
 (use-package poly-treesit-fold
   :vc (poly-treesit-fold
        :url "https://github.com/chuxubank/poly-any-template"
@@ -100,14 +108,18 @@ configured `yaml-ts-mode` file association can still take precedence over
 `yaml-mode` for the host buffer.
 `poly-any-go-template` requires Emacs 29.1+, `polymode`, and
 `go-template-ts-mode` 0.1.7+.
+`poly-any-template-indent-bars` additionally requires `indent-bars`.
 
 Customize `poly-any-jinja2-lighter` and `poly-any-go-template-lighter` to
 change or hide their mode-line lighters. Both variables accept any mode-line
 construct.
 
-Template polymodes preserve blank-line guides from `indent-bars`. Inner spans
-are filtered from the host's blank-line pass so template-action lines do not
-gain trailing guides, while real blank lines continue to display normally.
+`poly-any-template-indent-bars` keeps `indent-bars-mode` enabled in template
+polymodes while selecting its regular font-lock backend locally. This avoids
+the Tree-sitter backend suppressing Poly-lock's language fontifier in indirect
+buffers. Inner spans are filtered from the host's blank-line pass so
+template-action lines do not gain trailing guides, while real blank lines
+continue to display normally.
 
 `poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
 selects the parser belonging to the current polymode span. Fold ranges remain

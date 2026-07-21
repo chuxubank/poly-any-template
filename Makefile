@@ -5,9 +5,10 @@ SHARED_DIR = lisp/shared
 JINJA2_DIR = lisp/jinja2
 ANSIBLE_DIR = lisp/ansible
 GO_TEMPLATE_DIR = lisp/go-template
+INDENT_BARS_DIR = lisp/indent-bars
 TREESIT_FOLD_DIR = lisp/treesit-fold
 LOAD_PATH = -L $(SHARED_DIR) -L $(JINJA2_DIR) -L $(ANSIBLE_DIR) \
-	-L $(GO_TEMPLATE_DIR) \
+	-L $(GO_TEMPLATE_DIR) -L $(INDENT_BARS_DIR) \
 	-L $(TREESIT_FOLD_DIR) -L test -L $(JINJA2_TS_MODE_PATH)
 GO_TEMPLATE_URL = https://github.com/chuxubank/go-template-ts-mode
 JINJA2_TS_MODE_URL = https://github.com/chuxubank/jinja2-ts-mode
@@ -16,11 +17,13 @@ SOURCES = $(SHARED_DIR)/poly-any-template.el \
 	$(JINJA2_DIR)/poly-any-jinja2.el \
 	$(ANSIBLE_DIR)/poly-ansible-jinja2.el \
 	$(GO_TEMPLATE_DIR)/poly-any-go-template.el \
+	$(INDENT_BARS_DIR)/poly-any-template-indent-bars.el \
 	$(TREESIT_FOLD_DIR)/poly-treesit-fold.el
 AUTOLOADS = $(SHARED_DIR)/poly-any-template-autoloads.el \
 	$(JINJA2_DIR)/poly-any-jinja2-autoloads.el \
 	$(ANSIBLE_DIR)/poly-ansible-jinja2-autoloads.el \
 	$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el \
+	$(INDENT_BARS_DIR)/poly-any-template-indent-bars-autoloads.el \
 	$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el
 
 PACKAGE_SETUP = \
@@ -28,9 +31,9 @@ PACKAGE_SETUP = \
 	--eval "(package-initialize)" \
 	--eval "(setq load-prefer-newer t)" \
 	--eval "(when (file-directory-p \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\") (add-to-list 'treesit-extra-load-path \"$(JINJA2_TS_MODE_PATH)/.tree-sitter\"))" \
-	--eval "(dolist (directory '(\"$(CURDIR)/$(SHARED_DIR)\" \"$(CURDIR)/$(JINJA2_DIR)\" \"$(CURDIR)/$(ANSIBLE_DIR)\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)\")) (setq load-path (cons directory (delete directory load-path))))" \
+	--eval "(dolist (directory '(\"$(CURDIR)/$(SHARED_DIR)\" \"$(CURDIR)/$(JINJA2_DIR)\" \"$(CURDIR)/$(ANSIBLE_DIR)\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)\" \"$(CURDIR)/$(INDENT_BARS_DIR)\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)\")) (setq load-path (cons directory (delete directory load-path))))" \
 	--eval "(setq load-path (cons \"$(CURDIR)/test\" (delete \"$(CURDIR)/test\" load-path)))" \
-	--eval "(dolist (file '(\"$(CURDIR)/$(SHARED_DIR)/poly-any-template-autoloads.el\" \"$(CURDIR)/$(JINJA2_DIR)/poly-any-jinja2-autoloads.el\" \"$(CURDIR)/$(ANSIBLE_DIR)/poly-ansible-jinja2-autoloads.el\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el\")) (load file nil t))"
+	--eval "(dolist (file '(\"$(CURDIR)/$(SHARED_DIR)/poly-any-template-autoloads.el\" \"$(CURDIR)/$(JINJA2_DIR)/poly-any-jinja2-autoloads.el\" \"$(CURDIR)/$(ANSIBLE_DIR)/poly-ansible-jinja2-autoloads.el\" \"$(CURDIR)/$(GO_TEMPLATE_DIR)/poly-any-go-template-autoloads.el\" \"$(CURDIR)/$(INDENT_BARS_DIR)/poly-any-template-indent-bars-autoloads.el\" \"$(CURDIR)/$(TREESIT_FOLD_DIR)/poly-treesit-fold-autoloads.el\")) (load file nil t))"
 
 ARCHIVES = \
 	--eval "(require 'package)" \
@@ -39,7 +42,7 @@ ARCHIVES = \
 	--eval "(package-initialize)"
 
 .PHONY: all install-deps autoloads compile check-grammars test test-jinja2 \
-	test-ansible test-go-template test-treesit-fold clean
+	test-ansible test-go-template test-indent-bars test-treesit-fold clean
 
 all: compile test
 
@@ -69,6 +72,7 @@ autoloads:
 		--eval "(package-generate-autoloads 'poly-any-jinja2 \"$(JINJA2_DIR)\")" \
 		--eval "(package-generate-autoloads 'poly-ansible-jinja2 \"$(ANSIBLE_DIR)\")" \
 		--eval "(package-generate-autoloads 'poly-any-go-template \"$(GO_TEMPLATE_DIR)\")" \
+		--eval "(package-generate-autoloads 'poly-any-template-indent-bars \"$(INDENT_BARS_DIR)\")" \
 		--eval "(package-generate-autoloads 'poly-treesit-fold \"$(TREESIT_FOLD_DIR)\")"
 
 compile: autoloads
@@ -97,12 +101,18 @@ test-go-template: autoloads
 		-l poly-any-go-template-test \
 		-f ert-run-tests-batch-and-exit
 
+test-indent-bars: autoloads
+	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
+		-l poly-any-template-indent-bars-test \
+		-f ert-run-tests-batch-and-exit
+
 test-treesit-fold: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l poly-treesit-fold-test \
 		-f ert-run-tests-batch-and-exit
 
-test: check-grammars test-jinja2 test-ansible test-go-template test-treesit-fold
+test: check-grammars test-jinja2 test-ansible test-go-template \
+	test-indent-bars test-treesit-fold
 
 clean:
 	find . -name '*.elc' -delete

@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.17
+;; Version: 0.1.18
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -34,55 +34,11 @@ when present."
 (defvar poly-any-template-after-activate-hook nil
   "Hook run after a poly-any template mode has been activated.")
 
-(defvar-local poly-any-template--indent-bars-blank-line-function nil
-  "Original indent-bars blank-line display function for this buffer.")
-
 (defvar-local poly-any-template--poly-lock-requested nil
   "Non-nil when this polymode buffer should initialize Poly-lock.")
 
 (defvar-local poly-any-template--font-lock-managed-p nil
   "Non-nil when Font Lock is managed by a poly-any template mode.")
-
-(defun poly-any-template--indent-bars-filter-blank-lines
-    (function beg end &rest args)
-  "Call FUNCTION for real blank lines between BEG and END with ARGS.
-Polymode hides inner spans while fontifying the host, which makes template
-action lines look blank to `indent-bars'."
-  (save-excursion
-    (save-restriction
-      (widen)
-      (save-match-data
-        (goto-char beg)
-        (let ((limit (min end (point-max))))
-          (while (< (point) limit)
-            (if (looking-at "[ \t]*\n")
-                (let ((run-beg (point)))
-                  (while (and (< (point) limit)
-                              (looking-at "[ \t]*\n"))
-                    (forward-line 1))
-                  (let ((run-end (point)))
-                    (apply function run-beg run-end args)
-                    (goto-char run-end)))
-              (forward-line 1))))))))
-
-(defun poly-any-template--indent-bars-display-blank-lines
-    (beg end &rest args)
-  "Display indent bars on real blank lines between BEG and END with ARGS."
-  (apply #'poly-any-template--indent-bars-filter-blank-lines
-         poly-any-template--indent-bars-blank-line-function beg end args))
-
-(defun poly-any-template--configure-indent-bars ()
-  "Configure optional indent-bars integration in the current buffer."
-  (let ((current
-         (and (boundp 'indent-bars--display-blank-lines-function)
-              (symbol-value 'indent-bars--display-blank-lines-function))))
-    (unless (eq current
-                #'poly-any-template--indent-bars-display-blank-lines)
-      (setq-local poly-any-template--indent-bars-blank-line-function
-                  (or current 'indent-bars--display-blank-lines)))
-    (set (make-local-variable
-          'indent-bars--display-blank-lines-function)
-         #'poly-any-template--indent-bars-display-blank-lines)))
 
 (defun poly-any-template--extra-file-name-p (filename rules)
   "Return non-nil when FILENAME matches an entry in RULES.
@@ -226,53 +182,12 @@ fontification after the initial Poly-lock setup."
             (rename-buffer original-name))))
     (apply function args)))
 
-(defun poly-any-template--indent-bars-font-lock-active-p ()
-  "Return non-nil when an owned buffer uses indent-bars Tree-sitter lock."
-  (and (boundp 'indent-bars--font-lock-inhibit)
-       (catch 'active
-         (dolist (buffer (eieio-oref pm/polymode '-buffers))
-           (when (and (buffer-live-p buffer)
-                      (buffer-local-value
-                       'indent-bars--font-lock-inhibit buffer))
-             (throw 'active t)))
-         nil)))
-
-(defun poly-any-template--keep-inner-font-lock-enabled ()
-  "Keep language fontification enabled in a polymode inner buffer.
-Indent-bars can normally skip the language fontifier when only indentation
-guides need updating.  Polymode fontifies the host first, however, and that
-pass can clear face properties shared with inner buffers.  An inner span must
-therefore always restore its language faces when Poly-lock visits it."
-  (when (and poly-any-template--font-lock-managed-p
-             (buffer-base-buffer)
-             (boundp 'indent-bars--font-lock-inhibit))
-    (setq-local indent-bars--font-lock-inhibit nil)))
-
-(defun poly-any-template--poly-lock-flush (&optional beg end)
-  "Flush Poly-lock from BEG to END while updating indent-bars state."
-  (let ((beg (or beg (point-min)))
-        (end (or end (point-max))))
-    (when (poly-any-template--indent-bars-font-lock-active-p)
-      (with-silent-modifications
-        (put-text-property beg end 'indent-bars-font-lock-pending t)))
-    (poly-lock-flush beg end)))
-
 (defun poly-any-template--enable-poly-lock-in-current-buffer ()
   "Enable Poly-lock fontification in the current polymode buffer."
   (setq-local poly-any-template--font-lock-managed-p t)
-  (when (buffer-base-buffer)
-    (add-hook 'indent-bars-mode-hook
-              #'poly-any-template--keep-inner-font-lock-enabled t t)
-    (add-hook 'font-lock-mode-hook
-              #'poly-any-template--keep-inner-font-lock-enabled t t)
-    (poly-any-template--keep-inner-font-lock-enabled))
   (setq font-lock-mode t)
   (setq-local poly-lock-allow-fontification t)
-  (poly-lock-mode t)
-  (setq-local font-lock-flush-function
-              #'poly-any-template--poly-lock-flush
-              font-lock-fontify-buffer-function
-              #'poly-any-template--poly-lock-flush))
+  (poly-lock-mode t))
 
 (defun poly-any-template--disable-poly-lock-in-current-buffer ()
   "Disable Poly-lock fontification in the current polymode buffer."
@@ -358,10 +273,6 @@ use `text-mode' as the polymode host."
                    :lighter ',lighter-variable) t))
         (funcall polymode-symbol)
         (poly-any-template--enable-poly-lock font-lock-enabled)
-        (poly-any-template--configure-indent-bars)
-        (when (and (bound-and-true-p indent-bars-mode)
-                   (fboundp 'jit-lock-refontify))
-          (funcall 'jit-lock-refontify))
         (run-hooks 'poly-any-template-after-activate-hook)))))
 
 (unless (advice-member-p #'poly-any-template--font-lock-mode 'font-lock-mode)
