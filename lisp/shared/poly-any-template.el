@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.20
+;; Version: 0.1.21
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -152,10 +152,17 @@ CASE-INSENSITIVE-P describes the filesystem of the original template file."
                (not (eq remapped 'fundamental-mode)))
       remapped)))
 
-(defun poly-any-template--interpreter-mode ()
-  "Return the mode selected by the current buffer's interpreter line."
+(defun poly-any-template--interpreter-mode (&optional preamble-line-p)
+  "Return the mode selected by the current buffer's interpreter line.
+When PREAMBLE-LINE-P is non-nil, call it at the beginning of each leading
+line and skip consecutive lines for which it returns non-nil."
   (save-excursion
     (goto-char (point-min))
+    (when preamble-line-p
+      (while (and (not (eobp))
+                  (save-excursion
+                    (funcall preamble-line-p)))
+        (forward-line 1)))
     (when (looking-at auto-mode-interpreter-regexp)
       (when-let ((interpreter (match-string-no-properties 2)))
         (catch 'mode
@@ -254,16 +261,18 @@ Only `auto-mode-alist' is consulted, and the selected function is not run."
 
 (defun poly-any-template--activate
     (dialect innermode lighter-variable remove-template-suffix
-             &optional hostless-mode)
+             &optional hostless-mode interpreter-preamble-line-p)
   "Activate a polymode for DIALECT using INNERMODE and LIGHTER-VARIABLE.
 REMOVE-TEMPLATE-SUFFIX is passed to `poly-any-template--host-filename'.
 When no host mode is inferred, call HOSTLESS-MODE if it is non-nil; otherwise
-use `text-mode' as the polymode host."
+use `text-mode' as the polymode host.  INTERPRETER-PREAMBLE-LINE-P identifies
+leading template lines that may precede an interpreter line."
   (let* ((base-filename
           (poly-any-template--host-filename
            buffer-file-name remove-template-suffix))
          (host-major-mode
-          (or (poly-any-template--interpreter-mode)
+          (or (poly-any-template--interpreter-mode
+               interpreter-preamble-line-p)
               (poly-any-template-host-mode-for-file base-filename))))
     (if (and (not host-major-mode) hostless-mode)
         (funcall hostless-mode)

@@ -33,6 +33,11 @@ This follows Emacs's `set-auto-mode` priority. For example, an extensionless
 `script.tmpl` beginning with `#!/bin/zsh` uses `sh-mode`, and a conflicting
 filename extension does not override its interpreter.
 
+The interpreter line may follow consecutive template-only preamble lines.
+Go Template action lines and Jinja control or comment lines are skipped, but
+the search stops at the first host-text or blank line so shebang examples in
+the body are not treated as the host interpreter.
+
 Plain `.j2`, `.jinja`, and `.jinja2` files use `jinja2-ts-mode` directly.
 Plain `.gotmpl` and `.tmpl` files use `go-template-ts-mode` directly. A
 compound filename or a matching extra rule still activates Polymode with the

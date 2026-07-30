@@ -1,8 +1,8 @@
 ;;; poly-any-jinja2.el --- Polymode for Jinja2 templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.20
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.20") (jinja2-ts-mode "0.1.1"))
+;; Version: 0.1.21
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.21") (jinja2-ts-mode "0.1.1"))
 ;; Keywords: languages, polymode, templates, jinja2
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -62,6 +62,11 @@ Return a zero-width match so the inner span includes the opening delimiter."
     (?% (poly-any-template--lexical-tail-matcher "%}" '(?\" ?\')))
     (?# (poly-any-template--lexical-tail-matcher "#}" nil))))
 
+(defun poly-any-template--jinja2-preamble-line-p ()
+  "Return non-nil when the current line only contains a Jinja control tag."
+  (looking-at-p
+   "[ \t]*\\(?:{%[-+]?.*%}\\|{#[-+]?.*#}\\)[ \t]*$"))
+
 (define-innermode poly-any-template-jinja2-innermode
   :mode #'jinja2-ts-mode
   :head-matcher #'poly-any-template--jinja2-head-matcher
@@ -78,7 +83,8 @@ Return a zero-width match so the inner span includes the opening delimiter."
    (and buffer-file-name
         (string-match-p poly-any-jinja2--template-suffix-regexp
                         buffer-file-name))
-   poly-any-jinja2-hostless-mode))
+   poly-any-jinja2-hostless-mode
+   #'poly-any-template--jinja2-preamble-line-p))
 
 ;;;###autoload
 (add-to-list 'magic-mode-alist

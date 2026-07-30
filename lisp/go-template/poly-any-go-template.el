@@ -1,8 +1,8 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.20
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.20") (go-template-ts-mode "0.1.7"))
+;; Version: 0.1.21
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.21") (go-template-ts-mode "0.1.7"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -54,6 +54,10 @@ Return a zero-width match so the inner span includes the opening delimiter."
   (poly-any-template--lexical-tail-matcher
    "}}" '(?\" ?`) '(?`) '("/*" . "*/")))
 
+(defun poly-any-template--go-preamble-line-p ()
+  "Return non-nil when the current line only contains a Go template action."
+  (looking-at-p "[ \t]*{{-?.*}}[ \t]*$"))
+
 (define-innermode poly-any-template-go-innermode
   :mode #'go-template-ts-mode
   :head-matcher #'poly-any-template--go-head-matcher
@@ -70,7 +74,8 @@ Return a zero-width match so the inner span includes the opening delimiter."
    (and buffer-file-name
         (string-match-p poly-any-go-template--template-suffix-regexp
                         buffer-file-name))
-   #'go-template-ts-mode))
+   #'go-template-ts-mode
+   #'poly-any-template--go-preamble-line-p))
 
 ;;;###autoload
 (add-to-list 'magic-mode-alist
