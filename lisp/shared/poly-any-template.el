@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.19
+;; Version: 0.1.20
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -152,6 +152,20 @@ CASE-INSENSITIVE-P describes the filesystem of the original template file."
                (not (eq remapped 'fundamental-mode)))
       remapped)))
 
+(defun poly-any-template--interpreter-mode ()
+  "Return the mode selected by the current buffer's interpreter line."
+  (save-excursion
+    (goto-char (point-min))
+    (when (looking-at auto-mode-interpreter-regexp)
+      (when-let ((interpreter (match-string-no-properties 2)))
+        (catch 'mode
+          (dolist (entry interpreter-mode-alist)
+            (when (string-match-p
+                   (format "\\`%s\\'" (car entry))
+                   (file-name-nondirectory interpreter))
+              (throw 'mode
+                     (poly-any-template--remap-mode (cdr entry))))))))))
+
 (defun poly-any-template--global-font-lock-enabled-p ()
   "Return non-nil when Global Font Lock covers the current major mode."
   (and (bound-and-true-p global-font-lock-mode)
@@ -249,7 +263,8 @@ use `text-mode' as the polymode host."
           (poly-any-template--host-filename
            buffer-file-name remove-template-suffix))
          (host-major-mode
-          (poly-any-template-host-mode-for-file base-filename)))
+          (or (poly-any-template--interpreter-mode)
+              (poly-any-template-host-mode-for-file base-filename))))
     (if (and (not host-major-mode) hostless-mode)
         (funcall hostless-mode)
       (let* ((host-major-mode (or host-major-mode 'text-mode))

@@ -16,7 +16,8 @@ only the requested package on `load-path`:
 The template modes depend on the shared package. The integration packages
 are optional and are not referenced by the shared package or template modes.
 
-The mode before the template suffix is inferred from the filename:
+The host mode is inferred from the interpreter line first, then from the
+filename before the template suffix:
 
 | Filename | Host mode | Inner mode |
 | --- | --- | --- |
@@ -27,6 +28,10 @@ The mode before the template suffix is inferred from the filename:
 | `page.html.gotmpl` | HTML | `go-template-ts-mode` |
 | `deployment.yaml.tmpl` | YAML | `go-template-ts-mode` |
 | `page.html.tmpl` | HTML | `go-template-ts-mode` |
+
+This follows Emacs's `set-auto-mode` priority. For example, an extensionless
+`script.tmpl` beginning with `#!/bin/zsh` uses `sh-mode`, and a conflicting
+filename extension does not override its interpreter.
 
 Plain `.j2`, `.jinja`, and `.jinja2` files use `jinja2-ts-mode` directly.
 Plain `.gotmpl` and `.tmpl` files use `go-template-ts-mode` directly. A

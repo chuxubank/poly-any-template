@@ -41,8 +41,9 @@ ARCHIVES = \
 	--eval "(add-to-list 'package-archives '(\"jcs-elpa\" . \"https://jcs-emacs.github.io/jcs-elpa/packages/\") t)" \
 	--eval "(package-initialize)"
 
-.PHONY: all install-deps autoloads compile check-grammars test test-jinja2 \
-	test-ansible test-go-template test-indent-bars test-treesit-fold clean
+.PHONY: all install-deps autoloads compile check-grammars test test-shared \
+	test-jinja2 test-ansible test-go-template test-indent-bars \
+	test-treesit-fold clean
 
 all: compile test
 
@@ -85,6 +86,11 @@ check-grammars:
 		--eval "(require 'treesit)" \
 		--eval "(dolist (language '(jinja gotmpl yaml toml)) (unless (treesit-ready-p language) (error \"The %s grammar is unavailable\" language)))"
 
+test-shared: autoloads
+	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
+		-l poly-any-template-test \
+		-f ert-run-tests-batch-and-exit
+
 test-jinja2: autoloads
 	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
 		-l poly-any-jinja2-test \
@@ -111,7 +117,7 @@ test-treesit-fold: autoloads
 		-l poly-treesit-fold-test \
 		-f ert-run-tests-batch-and-exit
 
-test: check-grammars test-jinja2 test-ansible test-go-template \
+test: check-grammars test-shared test-jinja2 test-ansible test-go-template \
 	test-indent-bars test-treesit-fold
 
 clean:
