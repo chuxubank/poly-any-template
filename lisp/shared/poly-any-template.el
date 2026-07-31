@@ -54,10 +54,12 @@ through `treesit-primary-parser'."
   (let* ((language (treesit-parser-language parser))
          (tag-supported-p (fboundp 'treesit-parser-tag))
          (tag (and tag-supported-p
-                   (funcall 'treesit-parser-tag parser))))
+                   (funcall (symbol-function 'treesit-parser-tag)
+                            parser))))
     (ignore-errors (treesit-parser-delete parser))
     (if tag-supported-p
-        (funcall 'treesit-parser-create language nil t tag)
+        (funcall (symbol-function 'treesit-parser-create)
+                 language nil t tag)
       (treesit-parser-create language nil t))))
 
 (defun poly-any-template--owned-primary-parser ()
