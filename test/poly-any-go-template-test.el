@@ -137,6 +137,46 @@
                       (nth 1 span) (nth 2 span))
                      "{{/* literal }} inside */}}")))))
 
+(ert-deftest poly-any-go-template-limits-parser-to-template-spans ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        expected-ranges)
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/services.sh.tmpl")
+      (insert "#!/bin/sh\n")
+      (dotimes (index 60)
+        (insert (format "service_%d() { echo host; }\n" index))
+        (let ((beg (point)))
+          (insert (format "{{ if index .services %d }}" index))
+          (push (cons beg (point)) expected-ranges))
+        (insert "\n"))
+      (setq expected-ranges (nreverse expected-ranges))
+      (poly-any-go-template-mode)
+      (goto-char (caar expected-ranges))
+      (let ((base-buffer (current-buffer))
+            (inner-buffer (pm-span-buffer (pm-innermost-span))))
+        (should (buffer-live-p inner-buffer))
+        (with-current-buffer inner-buffer
+          (let ((parser
+                 (cl-find 'gotmpl (treesit-parser-list)
+                          :key #'treesit-parser-language)))
+            (should parser)
+            (should (equal (treesit-parser-included-ranges parser)
+                           expected-ranges))))
+        (with-current-buffer base-buffer
+          (goto-char (point-min))
+          (insert "# generated\n"))
+        (setq expected-ranges
+              (mapcar (lambda (range)
+                        (cons (+ (car range) 12) (+ (cdr range) 12)))
+                      expected-ranges))
+        (with-current-buffer inner-buffer
+          (let ((parser
+                 (cl-find 'gotmpl (treesit-parser-list)
+                          :key #'treesit-parser-language)))
+            (should (equal (treesit-parser-included-ranges parser)
+                           expected-ranges))))))))
+
 (ert-deftest poly-any-go-template-fontifies-host-and-inner-mode ()
   (skip-unless (and (fboundp 'yaml-ts-mode) (treesit-ready-p 'yaml)
                     (treesit-ready-p 'gotmpl)))

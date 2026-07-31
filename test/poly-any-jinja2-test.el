@@ -243,6 +243,46 @@
                       (nth 1 span) (nth 2 span))
                      "{# literal }} / %} #}")))))
 
+(ert-deftest poly-any-jinja2-limits-parser-to-template-spans ()
+  (skip-unless (treesit-ready-p 'jinja))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode)))
+        expected-ranges)
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/services.sh.j2")
+      (insert "#!/bin/sh\n")
+      (dotimes (index 40)
+        (insert (format "service_%d() { echo host; }\n" index))
+        (let ((beg (point)))
+          (insert (format "{%% if services[%d] %%}" index))
+          (push (cons beg (point)) expected-ranges))
+        (insert "\n"))
+      (setq expected-ranges (nreverse expected-ranges))
+      (poly-any-jinja2-mode)
+      (goto-char (caar expected-ranges))
+      (let ((base-buffer (current-buffer))
+            (inner-buffer (pm-span-buffer (pm-innermost-span))))
+        (should (buffer-live-p inner-buffer))
+        (with-current-buffer inner-buffer
+          (let ((parser
+                 (cl-find 'jinja (treesit-parser-list)
+                          :key #'treesit-parser-language)))
+            (should parser)
+            (should (equal (treesit-parser-included-ranges parser)
+                           expected-ranges))))
+        (with-current-buffer base-buffer
+          (goto-char (point-min))
+          (insert "# generated\n"))
+        (setq expected-ranges
+              (mapcar (lambda (range)
+                        (cons (+ (car range) 12) (+ (cdr range) 12)))
+                      expected-ranges))
+        (with-current-buffer inner-buffer
+          (let ((parser
+                 (cl-find 'jinja (treesit-parser-list)
+                          :key #'treesit-parser-language)))
+            (should (equal (treesit-parser-included-ranges parser)
+                           expected-ranges))))))))
+
 (ert-deftest poly-any-jinja2-fontifies-inner-mode-on-first-pass ()
   (skip-unless (treesit-ready-p 'jinja))
   (let ((treesit-font-lock-level 4))

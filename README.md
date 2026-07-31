@@ -147,6 +147,11 @@ buffers. Inner spans are filtered from the host's blank-line pass so
 template-action lines do not gain trailing guides, while real blank lines
 continue to display normally.
 
+Template inner modes restrict their primary Tree-sitter parsers to Polymode's
+template spans. This keeps the parser from reparsing the full mixed-language
+buffer for every span during Poly-lock fontification, while preserving host
+and template highlighting on the first display and after edits.
+
 `poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
 selects the parser belonging to the current polymode span. Fold ranges remain
 owned by their language modes; `go-template-ts-mode` and `jinja2-ts-mode`

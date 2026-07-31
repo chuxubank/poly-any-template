@@ -1,7 +1,7 @@
 ;;; poly-treesit-fold.el --- Use treesit-fold in polymode buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.4
+;; Version: 0.1.5
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (treesit-fold "20260417.1708"))
 ;; Keywords: convenience, folding, languages, polymode, tree-sitter
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -33,11 +33,17 @@
 
 (defun poly-treesit-fold--root-node ()
   "Return the root node of the current span's primary parser."
-  (when-let ((parser
-              (or (and (boundp 'treesit-primary-parser)
-                       (symbol-value 'treesit-primary-parser))
-                  (car (treesit-parser-list)))))
-    (ignore-errors (treesit-parser-root-node parser))))
+  (let* ((buffer (current-buffer))
+         (primary (and (boundp 'treesit-primary-parser)
+                       (symbol-value 'treesit-primary-parser)))
+         (parser
+          (if (and primary
+                   (eq (treesit-parser-buffer primary) buffer))
+              primary
+            (cl-find buffer (treesit-parser-list)
+                     :key #'treesit-parser-buffer))))
+    (when parser
+      (ignore-errors (treesit-parser-root-node parser)))))
 
 (defun poly-treesit-fold--with-parser (function &rest args)
   "Call FUNCTION with ARGS using the parser matching the polymode span."

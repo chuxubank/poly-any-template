@@ -1,8 +1,8 @@
 ;;; poly-any-go-template.el --- Polymode for Go templates -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Misaka
-;; Version: 0.1.21
-;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.21") (go-template-ts-mode "0.1.7"))
+;; Version: 0.1.22
+;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.22") (go-template-ts-mode "0.1.7"))
 ;; Keywords: languages, polymode, templates, go
 ;; URL: https://github.com/chuxubank/poly-any-template
 
@@ -62,6 +62,7 @@ Return a zero-width match so the inner span includes the opening delimiter."
   :mode #'go-template-ts-mode
   :head-matcher #'poly-any-template--go-head-matcher
   :tail-matcher #'poly-any-template--go-tail-matcher
+  :protect-font-lock nil
   :head-adjust-face nil)
 
 ;;;###autoload
