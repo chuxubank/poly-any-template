@@ -86,8 +86,11 @@ through `treesit-primary-parser'."
       (setq ranges (nreverse ranges))
       (with-current-buffer inner-buffer
         (remove-hook 'pre-redisplay-functions #'treesit--pre-redisplay t)
-        (treesit-parser-remove-notifier
-         parser #'treesit--font-lock-mark-ranges-to-fontify)
+        (dolist (notifier '(treesit--font-lock-mark-ranges-to-fontify
+                            treesit--font-lock-notifier))
+          (when (fboundp notifier)
+            (treesit-parser-remove-notifier
+             parser notifier)))
         (treesit-parser-set-included-ranges
          parser (or ranges `((,(point-min) . ,(point-min)))))))))
 
