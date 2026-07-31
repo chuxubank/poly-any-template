@@ -7,6 +7,21 @@
 (require 'poly-any-go-template)
 (require 'poly-any-jinja2)
 
+(ert-deftest poly-any-template-finds-primary-parser-on-emacs-29 ()
+  (let ((default-bound-p (default-boundp 'treesit-primary-parser))
+        (default-value (and (default-boundp 'treesit-primary-parser)
+                            (default-value 'treesit-primary-parser))))
+    (unwind-protect
+        (progn
+          (makunbound 'treesit-primary-parser)
+          (with-temp-buffer
+            (cl-letf (((symbol-function 'treesit-parser-list)
+                       (lambda () '(parser))))
+              (should (eq (poly-any-template--primary-parser) 'parser)))))
+      (if default-bound-p
+          (set-default 'treesit-primary-parser default-value)
+        (makunbound 'treesit-primary-parser)))))
+
 (ert-deftest poly-any-template-detects-interpreter-mode ()
   (let ((interpreter-mode-alist '(("zsh" . sh-mode)))
         (major-mode-remap-alist nil)

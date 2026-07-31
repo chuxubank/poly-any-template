@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.23
+;; Version: 0.1.24
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -41,16 +41,33 @@ when present."
 (defvar-local poly-any-template--font-lock-managed-p nil
   "Non-nil when Font Lock is managed by a poly-any template mode.")
 
+(defun poly-any-template--primary-parser ()
+  "Return the current inner buffer's primary parser.
+Emacs 29 treats the first parser as primary; later versions may expose it
+through `treesit-primary-parser'."
+  (or (and (boundp 'treesit-primary-parser)
+           (symbol-value 'treesit-primary-parser))
+      (car (treesit-parser-list))))
+
+(defun poly-any-template--recreate-parser (parser)
+  "Replace stale PARSER with one owned by the current buffer."
+  (let* ((language (treesit-parser-language parser))
+         (tag-supported-p (fboundp 'treesit-parser-tag))
+         (tag (and tag-supported-p
+                   (funcall 'treesit-parser-tag parser))))
+    (ignore-errors (treesit-parser-delete parser))
+    (if tag-supported-p
+        (funcall 'treesit-parser-create language nil t tag)
+      (treesit-parser-create language nil t))))
+
 (defun poly-any-template--owned-primary-parser ()
   "Return a primary parser owned by the current inner buffer."
-  (when-let ((parser treesit-primary-parser))
+  (when-let ((parser (poly-any-template--primary-parser)))
     (unless (eq (treesit-parser-buffer parser) (current-buffer))
-      (let ((language (treesit-parser-language parser))
-            (tag (treesit-parser-tag parser)))
-        (ignore-errors (treesit-parser-delete parser))
-        (setq-local treesit-primary-parser
-                    (treesit-parser-create language nil t tag))))
-    treesit-primary-parser))
+      (setq parser (poly-any-template--recreate-parser parser))
+      (when (boundp 'treesit-primary-parser)
+        (set (make-local-variable 'treesit-primary-parser) parser)))
+    parser))
 
 (defun poly-any-template--set-inner-parser-ranges (&optional _type)
   "Limit the current inner buffer's parser to its template spans."

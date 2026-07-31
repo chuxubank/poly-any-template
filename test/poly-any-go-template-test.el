@@ -195,9 +195,12 @@
           (should (buffer-live-p second-inner))
           (should-not (eq first-inner second-inner))
           (with-current-buffer second-inner
-            (should treesit-primary-parser)
-            (should (eq (treesit-parser-buffer treesit-primary-parser)
-                        second-inner))))))))
+            (let ((parser
+                   (cl-find 'gotmpl (treesit-parser-list)
+                            :key #'treesit-parser-language)))
+              (should parser)
+              (should (eq (treesit-parser-buffer parser)
+                          second-inner)))))))))
 
 (ert-deftest poly-any-go-template-fontifies-host-and-inner-mode ()
   (skip-unless (and (fboundp 'yaml-ts-mode) (treesit-ready-p 'yaml)
