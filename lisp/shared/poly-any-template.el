@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.22
+;; Version: 0.1.23
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -41,10 +41,21 @@ when present."
 (defvar-local poly-any-template--font-lock-managed-p nil
   "Non-nil when Font Lock is managed by a poly-any template mode.")
 
+(defun poly-any-template--owned-primary-parser ()
+  "Return a primary parser owned by the current inner buffer."
+  (when-let ((parser treesit-primary-parser))
+    (unless (eq (treesit-parser-buffer parser) (current-buffer))
+      (let ((language (treesit-parser-language parser))
+            (tag (treesit-parser-tag parser)))
+        (ignore-errors (treesit-parser-delete parser))
+        (setq-local treesit-primary-parser
+                    (treesit-parser-create language nil t tag))))
+    treesit-primary-parser))
+
 (defun poly-any-template--set-inner-parser-ranges (&optional _type)
-  "Limit the current inner buffer's parsers to its template spans."
+  "Limit the current inner buffer's parser to its template spans."
   (when-let ((base-buffer (buffer-base-buffer))
-             (parser treesit-primary-parser))
+             (parser (poly-any-template--owned-primary-parser)))
     (let ((inner-buffer (current-buffer))
           ranges)
       (with-current-buffer base-buffer

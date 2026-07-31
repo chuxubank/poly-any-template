@@ -177,6 +177,28 @@
             (should (equal (treesit-parser-included-ranges parser)
                            expected-ranges))))))))
 
+(ert-deftest poly-any-go-template-recreates-killed-inner-parser ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (let ((auto-mode-alist '(("\\.sh\\'" . sh-mode))))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/services.sh.tmpl")
+      (insert "echo {{ .service }}\n")
+      (poly-any-go-template-mode)
+      (goto-char (point-min))
+      (search-forward ".service")
+      (let ((first-inner (pm-span-buffer (pm-innermost-span))))
+        (should (buffer-live-p first-inner))
+        (kill-buffer first-inner)
+        (goto-char (point-min))
+        (search-forward ".service")
+        (let ((second-inner (pm-span-buffer (pm-innermost-span))))
+          (should (buffer-live-p second-inner))
+          (should-not (eq first-inner second-inner))
+          (with-current-buffer second-inner
+            (should treesit-primary-parser)
+            (should (eq (treesit-parser-buffer treesit-primary-parser)
+                        second-inner))))))))
+
 (ert-deftest poly-any-go-template-fontifies-host-and-inner-mode ()
   (skip-unless (and (fboundp 'yaml-ts-mode) (treesit-ready-p 'yaml)
                     (treesit-ready-p 'gotmpl)))

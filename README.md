@@ -150,7 +150,9 @@ continue to display normally.
 Template inner modes restrict their primary Tree-sitter parsers to Polymode's
 template spans. This keeps the parser from reparsing the full mixed-language
 buffer for every span during Poly-lock fontification, while preserving host
-and template highlighting on the first display and after edits.
+and template highlighting on the first display and after edits. If Polymode
+recreates an inner buffer, its stale parser is replaced with one owned by the
+new buffer.
 
 `poly-treesit-fold` requires Emacs 29.1+, `polymode`, and `treesit-fold`. It
 selects the parser belonging to the current polymode span. Fold ranges remain
