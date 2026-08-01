@@ -141,6 +141,19 @@
                (eq (eieio-oref innermode 'mode) 'jinja2-ts-mode))
              (eieio-oref pm/polymode '-innermodes)))))
 
+(ert-deftest poly-any-jinja2-is-idempotent ()
+  (let ((poly-any-template-after-activate-hook nil)
+        (activations 0))
+    (add-hook 'poly-any-template-after-activate-hook
+              (lambda () (setq activations (1+ activations))))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.sh.j2")
+      (poly-any-jinja2-mode)
+      (poly-any-jinja2-mode)
+      (should (eq major-mode 'sh-mode))
+      (should polymode-mode))
+    (should (= activations 1))))
+
 (ert-deftest poly-any-jinja2-uses-pure-mode-without-a-host ()
   (dolist (suffix '("j2" "jinja" "jinja2"))
     (with-temp-buffer

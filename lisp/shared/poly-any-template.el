@@ -363,10 +363,8 @@ leading template lines that may precede an interpreter line."
                               (string-remove-suffix
                                "-mode" (symbol-name host-major-mode))
                               dialect))))
-        (unless (and (bound-and-true-p polymode-mode)
-                     pm/polymode
-                     (eq (eieio-oref pm/polymode '-minor-mode)
-                         polymode-symbol))
+        (unless (and (boundp polymode-symbol)
+                     (symbol-value polymode-symbol))
           (unless (fboundp host-mode-symbol)
             (eval `(define-hostmode ,host-mode-symbol
                      :mode ',host-major-mode)
