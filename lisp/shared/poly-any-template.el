@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.24
+;; Version: 0.1.25
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -363,20 +363,24 @@ leading template lines that may precede an interpreter line."
                               (string-remove-suffix
                                "-mode" (symbol-name host-major-mode))
                               dialect))))
-        (unless (fboundp host-mode-symbol)
-          (eval `(define-hostmode ,host-mode-symbol
-                   :mode ',host-major-mode)
-                t))
-        (unless (fboundp polymode-symbol)
-          (eval `(define-polymode ,polymode-symbol
-                   :hostmode ',host-mode-symbol
-                   :innermodes '(,innermode)
-                   :lighter ',lighter-variable) t))
-        (poly-any-template--enable-inner-parser-ranges innermode)
-        (funcall polymode-symbol)
-        (poly-any-template--initialize-inner-parsers)
-        (poly-any-template--enable-poly-lock font-lock-enabled)
-        (run-hooks 'poly-any-template-after-activate-hook)))))
+        (unless (and (bound-and-true-p polymode-mode)
+                     pm/polymode
+                     (eq (eieio-oref pm/polymode '-minor-mode)
+                         polymode-symbol))
+          (unless (fboundp host-mode-symbol)
+            (eval `(define-hostmode ,host-mode-symbol
+                     :mode ',host-major-mode)
+                  t))
+          (unless (fboundp polymode-symbol)
+            (eval `(define-polymode ,polymode-symbol
+                     :hostmode ',host-mode-symbol
+                     :innermodes '(,innermode)
+                     :lighter ',lighter-variable) t))
+          (poly-any-template--enable-inner-parser-ranges innermode)
+          (funcall polymode-symbol)
+          (poly-any-template--initialize-inner-parsers)
+          (poly-any-template--enable-poly-lock font-lock-enabled)
+          (run-hooks 'poly-any-template-after-activate-hook))))))
 
 (unless (advice-member-p #'poly-any-template--font-lock-mode 'font-lock-mode)
   (advice-add 'font-lock-mode :around #'poly-any-template--font-lock-mode))

@@ -95,6 +95,19 @@
       (poly-any-go-template-mode))
     (should activated)))
 
+(ert-deftest poly-any-go-template-is-idempotent ()
+  (let ((poly-any-template-after-activate-hook nil)
+        (activations 0))
+    (add-hook 'poly-any-template-after-activate-hook
+              (lambda () (setq activations (1+ activations))))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/config.sh.tmpl")
+      (poly-any-go-template-mode)
+      (poly-any-go-template-mode)
+      (should (eq major-mode 'sh-mode))
+      (should polymode-mode))
+    (should (= activations 1))))
+
 (ert-deftest poly-any-go-template-span-includes-delimiters ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/deployment.text.tmpl")
