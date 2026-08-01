@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.25
+;; Version: 0.1.26
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
 ;; URL: https://github.com/chuxubank/poly-any-template
@@ -75,34 +75,36 @@ through `treesit-primary-parser'."
   "Limit the current inner buffer's parser to its template spans."
   (when-let ((base-buffer (buffer-base-buffer))
              (parser (poly-any-template--owned-primary-parser)))
-    (let ((inner-buffer (current-buffer))
-          ranges)
-      (with-current-buffer base-buffer
-        (pm-map-over-spans
-         (lambda (span)
-           (when (eq (current-buffer) inner-buffer)
-             (push (cons (nth 1 span) (nth 2 span)) ranges)))
-         nil nil nil nil nil t))
-      (setq ranges (nreverse ranges))
-      (with-current-buffer inner-buffer
-        (remove-hook 'pre-redisplay-functions #'treesit--pre-redisplay t)
-        (dolist (notifier '(treesit--font-lock-mark-ranges-to-fontify
-                            treesit--font-lock-notifier))
-          (when (fboundp notifier)
-            (treesit-parser-remove-notifier
-             parser notifier)))
-        (treesit-parser-set-included-ranges
-         parser (or ranges `((,(point-min) . ,(point-min)))))))))
+    (save-excursion
+      (let ((inner-buffer (current-buffer))
+            ranges)
+        (with-current-buffer base-buffer
+          (pm-map-over-spans
+           (lambda (span)
+             (when (eq (current-buffer) inner-buffer)
+               (push (cons (nth 1 span) (nth 2 span)) ranges)))
+           nil nil nil nil nil t))
+        (setq ranges (nreverse ranges))
+        (with-current-buffer inner-buffer
+          (remove-hook 'pre-redisplay-functions #'treesit--pre-redisplay t)
+          (dolist (notifier '(treesit--font-lock-mark-ranges-to-fontify
+                              treesit--font-lock-notifier))
+            (when (fboundp notifier)
+              (treesit-parser-remove-notifier
+               parser notifier)))
+          (treesit-parser-set-included-ranges
+           parser (or ranges `((,(point-min) . ,(point-min))))))))))
 
 (defun poly-any-template--sync-inner-parser-ranges (&rest _)
   "Refresh Tree-sitter ranges after Polymode spans may have changed."
   (when (and (bound-and-true-p polymode-mode)
              (not (buffer-base-buffer)))
-    (dolist (buffer (eieio-oref pm/polymode '-buffers))
-      (when (and (buffer-live-p buffer)
-                 (buffer-base-buffer buffer))
-        (with-current-buffer buffer
-          (poly-any-template--set-inner-parser-ranges))))))
+    (save-excursion
+      (dolist (buffer (eieio-oref pm/polymode '-buffers))
+        (when (and (buffer-live-p buffer)
+                   (buffer-base-buffer buffer))
+          (with-current-buffer buffer
+            (poly-any-template--set-inner-parser-ranges)))))))
 
 (defun poly-any-template--enable-inner-parser-ranges (innermode-symbol)
   "Keep Tree-sitter parsers for INNERMODE-SYMBOL restricted to its spans."
@@ -114,7 +116,7 @@ through `treesit-primary-parser'."
   "Create inner buffers so their parser ranges precede fontification."
   (add-hook 'after-change-functions
             #'poly-any-template--sync-inner-parser-ranges 100 t)
-  (save-current-buffer
+  (save-excursion
     (pm-map-over-spans #'ignore nil nil nil nil nil t)))
 
 (defun poly-any-template--extra-file-name-p (filename rules)

@@ -108,6 +108,24 @@
       (should polymode-mode))
     (should (= activations 1))))
 
+(ert-deftest poly-any-go-template-parser-range-sync-preserves-point ()
+  (skip-unless (treesit-ready-p 'gotmpl))
+  (with-temp-buffer
+    (setq buffer-file-name "/tmp/config.text.tmpl")
+    (insert "before {{ .value }} after")
+    (poly-any-go-template-mode)
+    (let ((base-buffer (current-buffer)))
+      (goto-char 5)
+      (cl-letf (((symbol-function
+                  'poly-any-template--set-inner-parser-ranges)
+                 (lambda (&rest _)
+                   (when-let ((base (buffer-base-buffer)))
+                     (with-current-buffer base
+                       (goto-char (point-max)))))))
+        (poly-any-template--sync-inner-parser-ranges))
+      (should (eq (current-buffer) base-buffer))
+      (should (= (point) 5)))))
+
 (ert-deftest poly-any-go-template-span-includes-delimiters ()
   (with-temp-buffer
     (setq buffer-file-name "/tmp/deployment.text.tmpl")
