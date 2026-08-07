@@ -4,7 +4,7 @@
 ;; Version: 0.1.26
 ;; Package-Requires: ((emacs "29.1") (poly-any-template "0.1.26") (go-template-ts-mode "0.1.7"))
 ;; Keywords: languages, polymode, templates, go
-;; URL: https://github.com/chuxubank/poly-any-template
+;; URL: https://github.com/cat-emacs/poly-any-template
 
 ;;; Commentary:
 

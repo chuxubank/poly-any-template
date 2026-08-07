@@ -4,7 +4,7 @@
 ;; Version: 0.1.26
 ;; Package-Requires: ((emacs "29.1") (indent-bars "0") (poly-any-template "0.1.26"))
 ;; Keywords: convenience, languages, polymode, templates
-;; URL: https://github.com/chuxubank/poly-any-template
+;; URL: https://github.com/cat-emacs/poly-any-template
 
 ;;; Commentary:
 

@@ -79,22 +79,22 @@ contains multiple packages.
 
 ```elisp
 (use-package jinja2-ts-mode
-  :vc (:url "https://github.com/chuxubank/jinja2-ts-mode"))
+  :vc (:url "https://github.com/cat-emacs/jinja2-ts-mode"))
 
 (use-package go-template-ts-mode
-  :vc (:url "https://github.com/chuxubank/go-template-ts-mode"))
+  :vc (:url "https://github.com/cat-emacs/go-template-ts-mode"))
 
 (use-package poly-any-template
-  :vc (:url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/cat-emacs/poly-any-template"
        :lisp-dir "lisp/shared"))
 
 (use-package poly-any-jinja2
-  :vc (:url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/cat-emacs/poly-any-template"
        :lisp-dir "lisp/jinja2")
   :demand t)
 
 (use-package poly-any-go-template
-  :vc (:url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/cat-emacs/poly-any-template"
        :lisp-dir "lisp/go-template")
   :demand t)
 ```
@@ -104,17 +104,17 @@ be installed separately:
 
 ```elisp
 (use-package poly-ansible-jinja2
-  :vc (:url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/cat-emacs/poly-any-template"
        :lisp-dir "lisp/ansible"))
 
 (use-package poly-any-template-indent-bars
-  :vc (:url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/cat-emacs/poly-any-template"
        :lisp-dir "lisp/indent-bars")
   :hook
   (poly-any-template-after-activate . poly-any-template-indent-bars-mode))
 
 (use-package poly-treesit-fold
-  :vc (:url "https://github.com/chuxubank/poly-any-template"
+  :vc (:url "https://github.com/cat-emacs/poly-any-template"
        :lisp-dir "lisp/treesit-fold")
   :demand t
   :config

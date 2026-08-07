@@ -7,7 +7,7 @@
 ;; Version: 0.1.26
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2"))
 ;; Keywords: languages, polymode, templates
-;; URL: https://github.com/chuxubank/poly-any-template
+;; URL: https://github.com/cat-emacs/poly-any-template
 
 ;;; Commentary:
 

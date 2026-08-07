@@ -10,8 +10,8 @@ TREESIT_FOLD_DIR = lisp/treesit-fold
 LOAD_PATH = -L $(SHARED_DIR) -L $(JINJA2_DIR) -L $(ANSIBLE_DIR) \
 	-L $(GO_TEMPLATE_DIR) -L $(INDENT_BARS_DIR) \
 	-L $(TREESIT_FOLD_DIR) -L test -L $(JINJA2_TS_MODE_PATH)
-GO_TEMPLATE_URL = https://github.com/chuxubank/go-template-ts-mode
-JINJA2_TS_MODE_URL = https://github.com/chuxubank/jinja2-ts-mode
+GO_TEMPLATE_URL = https://github.com/cat-emacs/go-template-ts-mode
+JINJA2_TS_MODE_URL = https://github.com/cat-emacs/jinja2-ts-mode
 
 SOURCES = $(SHARED_DIR)/poly-any-template.el \
 	$(JINJA2_DIR)/poly-any-jinja2.el \

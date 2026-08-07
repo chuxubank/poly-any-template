@@ -4,7 +4,7 @@
 ;; Version: 0.1.5
 ;; Package-Requires: ((emacs "29.1") (polymode "0.2") (treesit-fold "20260417.1708"))
 ;; Keywords: convenience, folding, languages, polymode, tree-sitter
-;; URL: https://github.com/chuxubank/poly-any-template
+;; URL: https://github.com/cat-emacs/poly-any-template
 
 ;;; Commentary:
 
